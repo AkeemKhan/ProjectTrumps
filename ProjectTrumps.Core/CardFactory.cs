@@ -53,7 +53,7 @@ namespace ProjectTrumps.Core
             return card;
         }
 
-        public DataCard GenerateCard (string name, IList<TrumpsAttribute> attributes, TrumpsType type) 
+        public DataCard GenerateCard (string name, IList<TrumpsAttribute> attributes, ColourType type) 
         {
             var card = new DataCard();
 
@@ -64,7 +64,7 @@ namespace ProjectTrumps.Core
             foreach (var attr in card.Attributes)
             {
                 attr.AttributeValue = 5;
-                attr.AttributeType = (TrumpsType)new Random().Next(1, 3);
+                attr.AttributeType = (ColourType)new Random().Next(1, 4);
             }
 
             card.OriginalAttributes = CopyAttributes(card.Attributes);
@@ -86,21 +86,21 @@ namespace ProjectTrumps.Core
             return list;
         }
 
-        public static TrumpsType ConvertToTrumpsType(string val)
+        public static ColourType ConvertToTrumpsType(string val)
         {
             switch (val)
             {
                 case "Red":
-                    return TrumpsType.Red;
+                    return ColourType.Red;
                     break;
                 case "Blue":
-                    return TrumpsType.Blue;
+                    return ColourType.Blue;
                     break;
                 case "Green":
-                    return TrumpsType.Green;
+                    return ColourType.Green;
                     break;
                 default:
-                    return (TrumpsType)new Random().Next(1, 3);
+                    return (ColourType)new Random().Next(1, 3);
                     break;
             }
         }

@@ -48,9 +48,10 @@ namespace MyApp // Note: actual namespace depends on the project name.
                     Console.WriteLine();
                     Console.WriteLine("Choose Type:");
                     Console.WriteLine();
-                    Console.WriteLine("1: Red");
-                    Console.WriteLine("2: Blue");
-                    Console.WriteLine("3: Green");
+                    Console.WriteLine("1: Red - Burn");
+                    Console.WriteLine("2: Blue - Evade/Parry");
+                    Console.WriteLine("3: Green - Heal");
+                    Console.WriteLine();
 
                     var typeInput = Console.ReadLine();
                     var typeInt = 1;
@@ -69,7 +70,7 @@ namespace MyApp // Note: actual namespace depends on the project name.
                             break;
                     }
 
-                    sCard1 = CardFactory.Instance.GenerateCard(nameInput, deck.FirstOrDefault().Attributes, (TrumpsType)typeInt);
+                    sCard1 = CardFactory.Instance.GenerateCard(nameInput, deck.FirstOrDefault().Attributes, (ColourType)typeInt);
                     break;
                 case "2":
                 default:
@@ -141,8 +142,8 @@ namespace MyApp // Note: actual namespace depends on the project name.
                 if (round == maxOpponents)
                 {
                     Console.WriteLine($"{ card2.DisplayName} is the final enemy!");
-                    card2.EnhanceAttribute(new Random().Next(0, card1.Attributes.Count - 1), 4);
-                    card2.EnhanceAttribute(new Random().Next(0, card1.Attributes.Count - 1), 4);
+                    card2.EnhanceAttribute(new Random().Next(0, card1.Attributes.Count - 1), 5);
+                    card2.EnhanceAttribute(new Random().Next(0, card1.Attributes.Count - 1), 5);
                 }
 
                 var playerTurn = true;

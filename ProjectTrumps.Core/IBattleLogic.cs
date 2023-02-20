@@ -44,13 +44,13 @@ namespace ProjectTrumps.Core
                 log.AddMessage(false, $"{card1.DisplayName} - type - {card1.Type.ToString()}");
                 log.AddMessage(false, $"{card2.DisplayName} - type - {card2.Type.ToString()}");
 
-                bool card1Advantage = (card1Attribute.AttributeType == TrumpsType.Red && card2Attribute.AttributeType == TrumpsType.Blue)
-                              || (card1Attribute.AttributeType == TrumpsType.Blue && card2Attribute.AttributeType == TrumpsType.Green)
-                              || (card1Attribute.AttributeType == TrumpsType.Green && card2Attribute.AttributeType == TrumpsType.Red);
+                bool card1Advantage = (card1Attribute.AttributeType == ColourType.Red && card2Attribute.AttributeType == ColourType.Blue)
+                              || (card1Attribute.AttributeType == ColourType.Blue && card2Attribute.AttributeType == ColourType.Green)
+                              || (card1Attribute.AttributeType == ColourType.Green && card2Attribute.AttributeType == ColourType.Red);
 
-                bool card2Advantage = (card2Attribute.AttributeType == TrumpsType.Red && card1Attribute.AttributeType == TrumpsType.Blue)
-                              || (card2Attribute.AttributeType == TrumpsType.Blue && card1Attribute.AttributeType == TrumpsType.Green)
-                              || (card2Attribute.AttributeType == TrumpsType.Green && card1Attribute.AttributeType == TrumpsType.Red);
+                bool card2Advantage = (card2Attribute.AttributeType == ColourType.Red && card1Attribute.AttributeType == ColourType.Blue)
+                              || (card2Attribute.AttributeType == ColourType.Blue && card1Attribute.AttributeType == ColourType.Green)
+                              || (card2Attribute.AttributeType == ColourType.Green && card1Attribute.AttributeType == ColourType.Red);
 
                 if (card1Advantage)
                 {
@@ -105,10 +105,10 @@ namespace ProjectTrumps.Core
                 log.AddMessage(false, System.Environment.NewLine);
                 if (damageCard1)
                 {
-                    if (card1.Type == TrumpsType.Blue)
+                    if (card1.Type == ColourType.Blue)
                     {
-                        var count = card1.Attributes.Where(p => p.AttributeType == TrumpsType.Blue).Count();
-                        var threshold = 100 - (count * 10);
+                        var count = card1.Attributes.Where(p => p.AttributeType == ColourType.Blue).Count();
+                        var threshold = 100 - (count * 8);
                         var evade = new Random().Next(0, 100) > threshold;
                         damage = evade ? 0 : damage;
                     }
@@ -116,19 +116,32 @@ namespace ProjectTrumps.Core
                     if (damage == 0)
                     {
                         log.AddMessage(true, $"{card1.DisplayName} evaded!");
+
+                        var count = card1.Attributes.Where(p => p.AttributeType == ColourType.Blue).Count();
+                        var threshold = 100 - (count * 8);
+                        var parry = new Random().Next(0, 100) > threshold;
+
+                        if (parry)
+                        {
+                            var healthBefore = card2.Health;
+                            var reverseDamage = 15 + count;
+                            card2.Health -= reverseDamage;
+                            log.AddMessage(true, $"{card1.DisplayName} parried for {reverseDamage}!");
+                            log.AddMessage(true, $"{card2.DisplayName} TOOK DAMAGE: {healthBefore} >>>> {card2.Health}");
+                        }
                     }
                     else
                     {
                         var healthBefore = card1.Health;
-                        card1.Health -= damage;
-                        log.AddMessage(true, $"{card1.DisplayName} Health: {healthBefore} >>>> {card1.Health}");
+                        card1.Health -= damage;                        
+                        log.AddMessage(true, $"{card1.DisplayName} TOOK DAMAGE: {healthBefore} >>>> {card1.Health}");
                     }
 
                     // Additional burn
-                    if (card2.Type == TrumpsType.Red)
+                    if (card2.Type == ColourType.Red)
                     {
-                        var count = card2.Attributes.Where(p => p.AttributeType == TrumpsType.Red).Count();
-                        var additionalDamage = count * 5;
+                        var count = card2.Attributes.Where(p => p.AttributeType == ColourType.Red).Count();
+                        var additionalDamage = count * 3;
 
                         var healthBefore = card2.Health;
                         card1.Health -= additionalDamage;
@@ -138,9 +151,9 @@ namespace ProjectTrumps.Core
                 }
                 else
                 {
-                    if (card2.Type == TrumpsType.Blue)
+                    if (card2.Type == ColourType.Blue)
                     {
-                        var count = card2.Attributes.Where(p => p.AttributeType == TrumpsType.Blue).Count();
+                        var count = card2.Attributes.Where(p => p.AttributeType == ColourType.Blue).Count();
                         var threshold = 100 - (count * 10);
                         var evade = new Random().Next(0, 100) > threshold;
                         damage = evade ? 0 : damage;
@@ -149,6 +162,19 @@ namespace ProjectTrumps.Core
                     if (damage == 0)
                     {
                         log.AddMessage(true, $"{card2.DisplayName} evaded!");
+
+                        var count = card1.Attributes.Where(p => p.AttributeType == ColourType.Blue).Count();
+                        var threshold = 100 - (count * 8);
+                        var parry = new Random().Next(0, 100) > threshold;
+
+                        if (parry)
+                        {
+                            var healthBefore = card2.Health;
+                            var reverseDamage = 15 + count;
+                            card1.Health -= reverseDamage;
+                            log.AddMessage(true, $"{card2.DisplayName} parried for {reverseDamage}!");
+                            log.AddMessage(true, $"{card1.DisplayName} TOOK DAMAGE: {healthBefore} >>>> {card1.Health}");
+                        }
                     }
                     else
                     {
@@ -158,10 +184,10 @@ namespace ProjectTrumps.Core
                     }
 
                     // Additional burn
-                    if (card1.Type == TrumpsType.Red)
+                    if (card1.Type == ColourType.Red)
                     {
-                        var count = card1.Attributes.Where(p => p.AttributeType == TrumpsType.Red).Count();
-                        var additionalDamage = count * 5;
+                        var count = card1.Attributes.Where(p => p.AttributeType == ColourType.Red).Count();
+                        var additionalDamage = count * 3;
 
                         var healthBefore = card2.Health;
                         card2.Health -= additionalDamage;
@@ -187,17 +213,17 @@ namespace ProjectTrumps.Core
             if (!skipHeal)
             {
                 // Post heal
-                if (card1.Type == TrumpsType.Green)
+                if (card1.Type == ColourType.Green)
                 {
-                    var count = card1.Attributes.Where(p => p.AttributeType == TrumpsType.Green).Count();
+                    var count = card1.Attributes.Where(p => p.AttributeType == ColourType.Green).Count();
                     var healAmount = count * 3;
                     var healthBefore = card1.Health;
                     card1.Health += healAmount;
                     log.AddMessage(true, $"{card1.DisplayName} healed {healthBefore} >>>> {card1.Health}");
                 }
-                if (card2.Type == TrumpsType.Green)
+                if (card2.Type == ColourType.Green)
                 {
-                    var count = card2.Attributes.Where(p => p.AttributeType == TrumpsType.Green).Count();
+                    var count = card2.Attributes.Where(p => p.AttributeType == ColourType.Green).Count();
                     var healAmount = count;
                     var healthBefore = card2.Health;
                     card2.Health += healAmount;

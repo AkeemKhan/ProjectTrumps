@@ -26,7 +26,7 @@ namespace ProjectTrumps.Core
         public float OriginalPowerRating => (OriginalAttributes.Sum(p => p.AttributeValue) / Attributes.Count) + (Attributes.Count(p => p.AttributeValue > 9));
 
 
-        public TrumpsType Type { get; set; }
+        public ColourType Type { get; set; }
         public IList<TrumpsAttribute> Attributes { get; set; } = new List<TrumpsAttribute>();
         public IList<TrumpsAttribute> OriginalAttributes { get; set; } = new List<TrumpsAttribute>();
         public int Health { get; set; } = 100;
@@ -86,7 +86,7 @@ namespace ProjectTrumps.Core
             Attributes[index].AttributeValue += value;
         }
 
-        public void ModifyAttributeType(int index, TrumpsType type)
+        public void ModifyAttributeType(int index, ColourType type)
         {
             Attributes[index].AttributeType = type;
         }
@@ -127,11 +127,11 @@ namespace ProjectTrumps.Core
     public interface IDataCard
     {        
         string OriginalName { get; set; }
-        TrumpsType Type { get; set; }
+        ColourType Type { get; set; }
         IList<TrumpsAttribute> Attributes { get; set; }
     }
 
-    public enum TrumpsType
+    public enum ColourType
     {
         None = 0,
         Red = 1,
@@ -143,6 +143,6 @@ namespace ProjectTrumps.Core
     {        
         public string AttributeName { get; set; }        
         public int AttributeValue { get; set; }
-        public TrumpsType AttributeType { get; set; }
+        public ColourType AttributeType { get; set; }
     }
 }
