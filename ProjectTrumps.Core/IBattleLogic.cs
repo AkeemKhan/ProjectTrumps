@@ -75,7 +75,7 @@ namespace ProjectTrumps.Core
             {
                 damageCard1 = false;
                 damage = card1AttributeStat - card2AttributeStat;
-                
+
                 if (damage > damageLimit)
                     damage = damageLimit;
 
@@ -206,41 +206,50 @@ namespace ProjectTrumps.Core
             }
 
             // Report HP
-            log.AddMessage(true, System.Environment.NewLine);
-
-            var divisionFactor = 10;
-
-            var maxSegments = card1.MaxHealth / divisionFactor;
-
-            var hpBarC1Segment = card1.MaxHealth / divisionFactor;
-            var hpBarC1 = "[";
-            for (int i = 0; i < hpBarC1Segment; i++)
-            {
-                hpBarC1 += "=";
-            }
-            for (int i = hpBarC1Segment; i < maxSegments; i++)
-            {
-                hpBarC1 += " ";
-            }
-
-            log.AddMessage(true, $"{card1.DisplayName} Health: {card1.Health}");
-            log.AddMessage(true, $"{hpBarC1}");            
-
-            var hpBarC2Segment = card2.MaxHealth / divisionFactor;
-            var hpBarC2 = "[";
-            for (int i = 0; i < hpBarC2Segment; i++)
-            {
-                hpBarC2 += "=";
-            }
-            for (int i = hpBarC2Segment; i < maxSegments; i++)
-            {
-                hpBarC2 += " ";
-            }
-
-            log.AddMessage(true, $"{card2.DisplayName} Health: {card2.Health}");
-            log.AddMessage(true, $"{hpBarC2}");
-            log.AddMessage(true, System.Environment.NewLine);
+            ReportHP(new List<DataCard> { card1, card2 }, log);
         }
+
+        private static void ReportHP(List<DataCard> cards, BattleLog log)
+        {
+            log.AddMessage(true, System.Environment.NewLine);
+
+            foreach (var card in cards)
+            {
+                var segmentPercValue = 1;
+                var currentHealth = card.Health;
+                var maxHealth = card.MaxHealth;
+                var lostHealth = maxHealth - currentHealth;
+
+                var percentage = Math.Round(((double)currentHealth / (double)maxHealth) * 100);
+                var percRemaining = 100 - percentage;
+
+                var hpBarStart = "[";
+                var segmentCount = 0;
+
+                var hpBar = "";
+
+                while (percentage >= segmentPercValue)
+                {
+                    hpBar += "=";
+                    percentage -= segmentPercValue;
+                }
+
+                while (percRemaining >= segmentPercValue)
+                {
+                    hpBar += " ";
+                    percRemaining -= segmentPercValue;
+                }
+
+                var hpBarEnd= "]";
+                var finalBar = hpBarStart + hpBar + hpBarEnd;
+
+                log.AddMessage(true, $"{card.DisplayName} Health: {card.Health}");
+                log.AddMessage(true, $"{finalBar}");            
+            }
+
+
+        }
+
         public static void ModifyAttribute(DataCard card, int attributeIndex, int modifier)
         {
             card.Attributes[attributeIndex].AttributeValue += modifier;

@@ -24,7 +24,7 @@ namespace MyApp // Note: actual namespace depends on the project name.
             var sCard1 = deck[new Random().Next(0, deck.Count - 1)];
             var sCard2 = deck[new Random().Next(0, deck.Count - 1)];
 
-            var hp = 200;
+            var hp = 100;
 
             var card1 = new DataCard() { OriginalName = sCard1.OriginalName, Attributes = CardFactory.Instance.CopyAttributes(sCard1.Attributes), Health = hp, MaxHealth = hp };
             var card2 = new DataCard() { OriginalName = sCard2.OriginalName, Attributes = CardFactory.Instance.CopyAttributes(sCard2.Attributes), Health = hp+20, MaxHealth = hp+20 };
@@ -88,8 +88,7 @@ namespace MyApp // Note: actual namespace depends on the project name.
 
             Console.WriteLine($"{card1.DisplayName} power: {c1Average}");
             Console.WriteLine($"{card2.DisplayName} power: {c2Average}");
-
-
+            
             while (card1.Health > 0 && card2.Health > 0)
             {
                 var playerTurnAtStart = playerTurn;
@@ -359,8 +358,8 @@ namespace MyApp // Note: actual namespace depends on the project name.
                 var winnerName = card1.Attributes[i].AttributeValue == card2.Attributes[i].AttributeValue
                     ? ""
                     : card1.Attributes[i].AttributeValue > card2.Attributes[i].AttributeValue
-                    ? card1.DisplayName
-                    : card2.DisplayName;
+                    ? card1.OriginalName
+                    : card2.OriginalName;
 
                 Console.WriteLine($"{card1.Attributes[i].AttributeValue} - {card1.Attributes[i].AttributeName} - {card2.Attributes[i].AttributeValue} ({winnerName})");
             }
@@ -386,10 +385,6 @@ namespace MyApp // Note: actual namespace depends on the project name.
                 {
                     Console.WriteLine($"{(i + 1)} - {card.Attributes[i].AttributeName} - {card.Attributes[i].AttributeValue} - ({card.Attributes[i].AttributeType})");
                 }
-            }
-
-            if (card.Attributes.Count == 0) 
-            { 
             }
         }
     }
