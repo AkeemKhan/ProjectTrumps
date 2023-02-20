@@ -10,12 +10,13 @@ namespace ProjectTrumps.Core
     {
         public static CardFactory Instance { get; private set; } = new CardFactory();
 
-        public TrumpsCard CreateCard(string[] args)
+        public DataCard CreateCard(string[] args)
         {
-            var card = new TrumpsCard();
+            var card = new DataCard();
             TrumpsAttribute temp = null;
 
-            card.Name = args[1];
+            card.OriginalName = args[1];
+            card.AffiliatedName = args[1];
             card.Type = ConvertToTrumpsType(args[2]);
 
             for (int i = 3; i < args.Length; i++)
@@ -28,6 +29,7 @@ namespace ProjectTrumps.Core
                         temp = new TrumpsAttribute();
                         temp.AttributeName = args[i];
                         card.Attributes.Add(temp);
+                        card.OriginalAttributes.Add(temp);
                         break;
                     case 1:
                         temp.AttributeValue = int.Parse(args[i]);
@@ -42,6 +44,20 @@ namespace ProjectTrumps.Core
             }
 
             return card;
+        }
+
+        public IList<TrumpsAttribute> CopyAttributes(IList<TrumpsAttribute> attributes) 
+        { 
+            var list = new List<TrumpsAttribute>();
+            foreach (var attr in attributes)
+                list.Add(new TrumpsAttribute 
+                { 
+                    AttributeName = attr.AttributeName, 
+                    AttributeValue = attr.AttributeValue, 
+                    AttributeType = attr.AttributeType 
+                });
+
+            return list;
         }
 
         public static TrumpsType ConvertToTrumpsType(string val)
