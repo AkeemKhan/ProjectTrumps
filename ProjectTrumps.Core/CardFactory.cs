@@ -14,6 +14,7 @@ namespace ProjectTrumps.Core
         {
             var card = new DataCard();
             TrumpsAttribute temp = null;
+            TrumpsAttribute origTemp = null;
 
             card.OriginalName = args[1];
             card.AffiliatedName = args[1];
@@ -27,21 +28,46 @@ namespace ProjectTrumps.Core
                 {
                     case 0:
                         temp = new TrumpsAttribute();
+                        origTemp = new TrumpsAttribute();
+
                         temp.AttributeName = args[i];
+                        origTemp.AttributeName = args[i];
+
                         card.Attributes.Add(temp);
                         card.OriginalAttributes.Add(temp);
                         break;
                     case 1:
                         temp.AttributeValue = int.Parse(args[i]);
+                        origTemp.AttributeValue = int.Parse(args[i]);
                         break;
                     case 2:
                         temp.AttributeType = ConvertToTrumpsType(args[i]);
+                        origTemp.AttributeType = ConvertToTrumpsType(args[i]);
                         break;
                     default:
                         break;
                 }
 
             }
+
+            return card;
+        }
+
+        public DataCard GenerateCard (string name, IList<TrumpsAttribute> attributes, TrumpsType type) 
+        {
+            var card = new DataCard();
+
+            card.Attributes = CopyAttributes(attributes);
+            card.OriginalName = name;
+            card.Type= type;
+
+            foreach (var attr in card.Attributes)
+            {
+                attr.AttributeValue = 5;
+                attr.AttributeType = (TrumpsType)new Random().Next(1, 3);
+            }
+
+            card.OriginalAttributes = CopyAttributes(card.Attributes);
 
             return card;
         }

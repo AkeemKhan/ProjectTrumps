@@ -22,7 +22,7 @@ namespace ProjectTrumps.Core
             var card1AttributeStat = (card1Attribute.AttributeValue * 10) + new Random().Next(-5, 5);
             var card2AttributeStat = (card2Attribute.AttributeValue * 10) + new Random().Next(-5, 5);
 
-            log.AddMessage(false, $"Selected Attribute: {card1Attribute.AttributeName}");
+            log.AddMessage(true, $"Selected Attribute: {card1Attribute.AttributeName}");
 
             log.AddMessage(false, $"{card1.DisplayName} - {card1Attribute.AttributeName} - {card1Attribute.AttributeValue}");
             log.AddMessage(false, $"{card2.DisplayName} - {card2Attribute.AttributeName} - {card2Attribute.AttributeValue}");
@@ -131,9 +131,9 @@ namespace ProjectTrumps.Core
                         var additionalDamage = count * 5;
 
                         var healthBefore = card2.Health;
-                        card2.Health -= additionalDamage;
-                        log.AddMessage(false, $"{card2.DisplayName} suffers additional burn damage");
-                        log.AddMessage(true, $"{card2.DisplayName} Health: {healthBefore} >>>> {card2.Health}");
+                        card1.Health -= additionalDamage;
+                        log.AddMessage(true, $"{card1.DisplayName} suffers additional burn damage");
+                        log.AddMessage(true, $"{card1.DisplayName} Health: {healthBefore} >>>> {card1.Health}");
                     }
                 }
                 else
@@ -148,7 +148,7 @@ namespace ProjectTrumps.Core
 
                     if (damage == 0)
                     {
-                        log.AddMessage(false, $"{card2.DisplayName} evaded!");
+                        log.AddMessage(true, $"{card2.DisplayName} evaded!");
                     }
                     else
                     {
@@ -165,7 +165,7 @@ namespace ProjectTrumps.Core
 
                         var healthBefore = card2.Health;
                         card2.Health -= additionalDamage;
-                        log.AddMessage(false, $"{card2.DisplayName} suffers additional burn damage");
+                        log.AddMessage(true, $"{card2.DisplayName} suffers additional burn damage");
                         log.AddMessage(true, $"{card2.DisplayName} TOOK DAMAGE: {healthBefore} >>>> {card2.Health}");
                     }
                 }
@@ -204,12 +204,9 @@ namespace ProjectTrumps.Core
                     log.AddMessage(true, $"{card2.DisplayName} healed {healthBefore} >>>> {card2.Health}");
                 }
             }
-
-            // Report HP
-            ReportHP(new List<DataCard> { card1, card2 }, log);
         }
 
-        private static void ReportHP(List<DataCard> cards, BattleLog log)
+        public static void ReportHP(List<DataCard> cards, BattleLog log)
         {
             log.AddMessage(true, System.Environment.NewLine);
 

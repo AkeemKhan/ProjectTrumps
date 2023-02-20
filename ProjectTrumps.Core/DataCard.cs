@@ -8,7 +8,6 @@ namespace ProjectTrumps.Core
 {
     public class DataCard : IDataCard
     {
-
         public string DisplayName 
         { 
             get 
@@ -47,6 +46,81 @@ namespace ProjectTrumps.Core
                     AttributeValue= newAttr.AttributeValue,
                 });
             }
+        }
+
+        public void RestoreAttributes(bool restoreHealth = true)
+        {
+            AffiliatedName = "";
+
+            if (restoreHealth)
+                FullHeal();
+
+            Attributes.Clear();
+            foreach (var newAttr in OriginalAttributes)
+            {
+                Attributes.Add(new TrumpsAttribute
+                {
+                    AttributeName = newAttr.AttributeName,
+                    AttributeType = newAttr.AttributeType,
+                    AttributeValue = newAttr.AttributeValue,
+                });
+            }
+        }
+
+        public void EnhanceAllAttributes(int value)
+        {
+            for (int i = 0; i < Attributes.Count; i++)
+            {
+                EnhanceAttribute(i, value);
+            }
+        }
+
+        public void EnhanceOriginalAttribute(int index, int value)
+        {
+            Attributes[index].AttributeValue = OriginalAttributes[index].AttributeValue;
+            Attributes[index].AttributeValue += value;
+        }
+
+        public void EnhanceAttribute(int index, int value)
+        {
+            Attributes[index].AttributeValue += value;
+        }
+
+        public void ModifyAttributeType(int index, TrumpsType type)
+        {
+            Attributes[index].AttributeType = type;
+        }
+
+        public void UnifyAttributesToCardType()
+        {
+            RestoreAttributes(true);
+
+            for (int i = 0; i < Attributes.Count; i++)
+            {
+                ModifyAttributeType(i, Type);
+            }
+        }
+
+        public void EnhanceHealth(int value)
+        {
+            MaxHealth += value;
+            Health += value;
+        }
+
+        public void Heal(int value)
+        {
+            Health += value;
+        }
+
+        public void FullHeal()
+        {
+            Health = MaxHealth;
+        }
+
+        public void AllEnhance(int hpValue, int attrValue)
+        {
+            EnhanceHealth(hpValue);
+            EnhanceAllAttributes(attrValue);
         }
     }
 
