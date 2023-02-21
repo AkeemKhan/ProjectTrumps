@@ -8,25 +8,20 @@ namespace MyApp // Note: actual namespace depends on the project name.
     internal class Program
     {
         static void Main(string[] args)
-        {
-            var deck = new List<DataCard>();
+        {            
             var opponents = new Queue<DataCard>();
             var path = @"C:\\Users\\AKEEM\\Documents\\TrumpsGen.csv";
 
-            using (var reader = new StreamReader(path))
-            {
-                while (!reader.EndOfStream)
-                {
-                    var line = reader.ReadLine();
-                    var card = CardFactory.Instance.CreateCard(line.Split(','));
-                    deck.Add(card);
-                }
-            }
+            SaveState.Instance.MainCardsLocation = path;
+            SaveState.Instance.LoadMainDeck();
+            SaveState.Instance.LoadAdditionalDeck();
+            var deck = SaveState.Instance.FullDeck;
 
             Console.WriteLine("Choose Ladder starter:");
             Console.WriteLine();
             Console.WriteLine("1: New Hero");
-            Console.WriteLine("2: Existing Heroes");
+            Console.WriteLine("2: Existing Hero");
+            Console.WriteLine("3: Load Hero");
 
             bool usingHero = false;
             var startInput = Console.ReadLine();
@@ -73,6 +68,12 @@ namespace MyApp // Note: actual namespace depends on the project name.
                     sCard1 = CardFactory.Instance.GenerateCard(nameInput, deck.FirstOrDefault().CurrentAttributes, (ColourType)typeInt);
                     break;
                 case "2":
+                    sCard1 = deck[new Random().Next(0, deck.Count)];
+                    break;
+                case "3":
+                    sCard1 = SelectLSavedHero(out var loadedHero);
+                    usingHero = loadedHero;
+                    break;
                 default:
                     sCard1 = deck[new Random().Next(0, deck.Count)];
                     break;
@@ -105,12 +106,13 @@ namespace MyApp // Note: actual namespace depends on the project name.
             while (opponents.Count > 0)
             {
                 sCard2 = opponents.Dequeue();
-                var hp = 100 + ((round - 1) * 20);
+                var hp = 100 + ((round - 1) * 15);
                 
                 if (round == 1)
                 {
                     card1 = new DataCard() 
                     {
+                        Id = sCard1.Id,
                         OriginalName = sCard1.OriginalName, 
                         CurrentAttributes = CardFactory.Instance.CopyAttributes(sCard1.CurrentAttributes), 
                         OriginalAttributes = CardFactory.Instance.CopyAttributes(sCard1.CurrentAttributes),
@@ -121,7 +123,8 @@ namespace MyApp // Note: actual namespace depends on the project name.
                 }
 
                 var card2 = new DataCard() 
-                { 
+                {
+                    Id = sCard2.Id,
                     OriginalName = sCard2.OriginalName, 
                     CurrentAttributes = CardFactory.Instance.CopyAttributes(sCard2.CurrentAttributes),
                     OriginalAttributes = CardFactory.Instance.CopyAttributes(sCard2.CurrentAttributes),
@@ -132,7 +135,7 @@ namespace MyApp // Note: actual namespace depends on the project name.
 
                 for(int i = 1; i <= round; i++)
                 {
-                    card2.EnhanceAttribute(new Random().Next(0, card1.CurrentAttributes.Count),1);
+                    card2.EnhanceAttribute(new Random().Next(0, card1.CurrentAttributes.Count),2);
                 }
 
                 if (round < maxOpponents)
@@ -152,19 +155,29 @@ namespace MyApp // Note: actual namespace depends on the project name.
                     card2.EnhanceAttribute(new Random().Next(0, card1.CurrentAttributes.Count), 5);
                 }
 
+                var matchController = new MatchController()
+                {
+                    DamageLimit = 10 * round,
+                    UseCost = -3
+                };
+
+                var cpuController = new CPUController()
+                {
+                    DamageThreshold = 20,
+                    ChangeCard = false,
+                    ChangeAtNTimesDamageTaken = 10,
+                    DamageTakenCounter = 0
+                };
+
+                bool retreat = false;
                 var playerTurn = true;
                 var prevAttr = -1;
 
-                var useModifier = - 3;
-                var heroUseModifier = -1;
-
-                var damageLimit = 10 * round;
-                var aiDamageChangeThreshold = 20;
                 var aiMoraleDamage = 0;
                 var aiChangeAtMoraleBreak = 6;
-                var aiTakenDamageCounter = 0;
-                var aiChangeAtNTimesDamageTaken = 10;
-                var aiChangeNext = false;
+
+                float aiMaxMorale = 100;
+                float aiMorale = 100;
            
                 var aiChosenCommands = new List<int>();
                 InitialiseDifficulty(card1, card2, aiChosenCommands, difficulty);
@@ -214,6 +227,11 @@ namespace MyApp // Note: actual namespace depends on the project name.
                                 conductBattle = false;
                                 hasSelected = true;
                             }
+                            else if (input.ToLower() == "r")
+                            {
+                                if (usingHero)
+                                    retreat = true;
+                            }
                             else if (int.TryParse(input, out var res))
                             {
                                 res--;
@@ -232,18 +250,18 @@ namespace MyApp // Note: actual namespace depends on the project name.
                                 changeCard = false;
                                 conductBattle = true;
                             }
+
+                            if (retreat)
+                                break;
                         }
+
 
                         if (conductBattle)
                         {
                             Console.WriteLine("******************************************************************");
-                            SoloBattleLogic.EvaluateBattle(card1, card2, selectedAttribute, damageLimit, out var log);
-                            SoloBattleLogic.ModifyAttribute(card1, selectedAttribute, useModifier);
-
-                            foreach (var msg in log.Messages)
-                            {
-                                Console.WriteLine(msg);
-                            }
+                            SoloBattleLogic.EvaluateBattle(card1, card2, selectedAttribute, matchController.DamageLimit, out var log);
+                            SoloBattleLogic.ModifyAttribute(card1, selectedAttribute, matchController.UseCost);
+                            log.DisplayConsoleMessages();
 
                             InitialiseDifficulty(card1, card2, aiChosenCommands, difficulty);
                         }
@@ -254,17 +272,20 @@ namespace MyApp // Note: actual namespace depends on the project name.
                         }
 
                         playerTurn = false;
+
+                        if (retreat)
+                            break;
                     }
                     else
                     {
                         Console.WriteLine("CPU turn - Press to continue");
                         Console.ReadLine();
 
-                        if (aiChangeNext)
+                        if (cpuController.ChangeCard)
                         {
                             Console.WriteLine("CPU Changed card - Press to continue");
                             ChangeCard(deck, card2, false);
-                            aiChangeNext = false;
+                            cpuController.ChangeCard = false;
 
                             Console.ReadLine();
                         }
@@ -272,79 +293,42 @@ namespace MyApp // Note: actual namespace depends on the project name.
                         {
                             Console.WriteLine("******************************************************************");
                             var randomAttributeSelected = aiChosenCommands[new Random().Next(0, aiChosenCommands.Count)];
-                            SoloBattleLogic.EvaluateBattle(card1, card2, randomAttributeSelected, damageLimit, out var log);
-                            SoloBattleLogic.ModifyAttribute(card2, randomAttributeSelected, useModifier);
-
-                            foreach (var msg in log.Messages)
-                            {
-                                Console.WriteLine(msg);
-                            }
+                            SoloBattleLogic.EvaluateBattle(card1, card2, randomAttributeSelected, matchController.DamageLimit, out var log);
+                            SoloBattleLogic.ModifyAttribute(card2, randomAttributeSelected, matchController.UseCost);
+                            log.DisplayConsoleMessages();
                         }
-
 
                         playerTurn = true;
                     }
 
+                    if (retreat)
+                        break;
+
                     var aiHealthAfter = card2.Health;
                     if (aiHealthAfter < aiHealthBefore)
                     {
-                        aiTakenDamageCounter++;
+                        cpuController.DamageTakenCounter++;
                     }
 
-                    if (aiHealthBefore - aiHealthAfter >= aiDamageChangeThreshold)
-                    {
-                        var diff = aiHealthBefore - aiHealthAfter;
+                    cpuController.Morale.EvaluateMorale(aiHealthBefore, aiHealthAfter, playerTurn, out var moraleLog);
+                    moraleLog.DisplayConsoleMessages();
 
-                        if (diff * 2 > aiDamageChangeThreshold)
-                        {
-                            aiMoraleDamage += ((aiChangeAtMoraleBreak / 2) + 1);
-                            Console.WriteLine($"Inflicted SIGNIFICANT damage");
-                        }
-                        else if (playerTurnAtStart)
-                        {
-                            aiMoraleDamage++;
-                            Console.WriteLine($"Inflicted considerable damage");
-                        }
-                        else
-                        {
-                            aiMoraleDamage = aiMoraleDamage + 2;
-                            Console.WriteLine($"Self-Inflicted considerable damage");
-                        }
-                    }
-                    else
-                    {
-                        if (aiMoraleDamage > 0)
-                            aiMoraleDamage--;
-                    }
-
-                    if (aiMoraleDamage < aiChangeAtMoraleBreak)
-                    {
-                        double morale = ((aiChangeAtMoraleBreak - aiMoraleDamage) / (double)aiChangeAtMoraleBreak) * 100;
-                        Console.WriteLine($"Morale - {morale.ToString("0")}%");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Opponenet has Broken - Morale - 0%");
-                    }
-
-                    if (aiMoraleDamage >= aiChangeAtMoraleBreak ||
-                        aiTakenDamageCounter == aiChangeAtNTimesDamageTaken)
-                    {
-                        aiTakenDamageCounter = 0;
-                        aiMoraleDamage = 0;
-                        aiChangeNext = true;
-                    }
                     Console.WriteLine("******************************************************************");
 
                     var blog = new BattleLog();
                     SoloBattleLogic.ReportHP(new List<DataCard> { card1, card2 }, blog);
-                    foreach (var msg in blog.Messages)
-                    {
-                        Console.WriteLine(msg);
-                    }
+                    blog.DisplayConsoleMessages();
 
                     Console.WriteLine("Press to continue");
                     Console.ReadLine();
+                }
+
+                if (retreat)
+                {
+                    Console.WriteLine("Saving card --- Ending run");
+                    DisplayCardDetails(card1, 0, true);
+                    SaveState.Instance.SaveCard(card1);
+                    break;
                 }
 
                 PostGameSummary(card1, card2);
@@ -393,80 +377,124 @@ namespace MyApp // Note: actual namespace depends on the project name.
 
                     Console.WriteLine();
 
-                    var input = Console.ReadLine();
-                    var heroUpgrade = 0;
-                    switch (input)
+                    if (opponents.Any())
                     {
-                        case "1":
-                            Console.WriteLine("Restored and Enhanced Health");
-                            card1.FullHeal();
-                            card1.EnhanceHealth(100);
-                            break;
-                        case "2":
-                            Console.WriteLine("Restored attributes to original values");
-                            card1.Heal(20);
-                            card1.RestoreAttributes();
+                        var input = Console.ReadLine();
+                        var heroUpgrade = 0;
+                        switch (input)
+                        {
+                            case "1":
+                                Console.WriteLine("Restored and Enhanced Health");
+                                card1.FullHeal();
+                                card1.EnhanceHealth(100);
+                                break;
+                            case "2":
+                                Console.WriteLine("Restored attributes to original values");
+                                card1.Heal(20);
+                                card1.RestoreAttributes();
 
-                            if (usingHero)
-                            {
-                                heroUpgrade++;
-                                card1.EnhanceAllAttributes(heroUpgrade+1);
-                            }
+                                if (usingHero)
+                                {
+                                    heroUpgrade++;
+                                    card1.EnhanceAllAttributes(heroUpgrade+1);
+                                }
 
-                            break;
-                        case "3":
-                            Console.WriteLine("Enhanced current attributes");
-                            // card1.Heal(20);
-                            card1.EnhanceAllAttributes(2);
-                            // card1.EnhanceAttribute(new Random().Next(0, card1.CurrentAttributes.Count), 1);
-                            break;
-                        case "4":
-                            Console.WriteLine("Greatly enhanced a single attribute");
-                            var extraModifier = 0;
+                                break;
+                            case "3":
+                                Console.WriteLine("Enhanced current attributes");
+                                // card1.Heal(20);
+                                card1.EnhanceAllAttributes(2);
+                                // card1.EnhanceAttribute(new Random().Next(0, card1.CurrentAttributes.Count), 1);
+                                break;
+                            case "4":
+                                Console.WriteLine("Greatly enhanced a single attribute");
+                                var extraModifier = 0;
 
-                            if (usingHero)
-                            {
-                                heroUpgrade++;
-                                extraModifier = 1 + heroUpgrade;
-                            }
+                                if (usingHero)
+                                {
+                                    heroUpgrade++;
+                                    extraModifier = 1 + heroUpgrade;
+                                }
 
-                            card1.EnhanceAttribute(new Random().Next(0, card1.CurrentAttributes.Count), 5 + extraModifier);
-                            break;
-                        case "5":
-                            Console.WriteLine($"Specialised and restored all attributes to type {card1.Type.ToString()}");
-                            card1.Heal(15);
-                            card1.UnifyAttributesToCardType(true);
-                            break;
-                        case "6":
-                            Console.WriteLine($"Specialised all attributes to type {card1.Type.ToString()}");
-                            card1.Heal(15);
-                            card1.UnifyAttributesToCardType();
-                            card1.EnhanceAttribute(new Random().Next(0, card1.CurrentAttributes.Count), 3);
-                            break;
-                        case "7":
-                            Console.WriteLine("Lighlty enhanced all attributes and health");
-                            card1.Heal(15);
-                            card1.EnhanceHealth(25);
-                            card1.EnhanceAllAttributes(1);
-                            break;
-                        default:
-                            Console.WriteLine("Restored and Enhanced Health");
-                            card1.FullHeal();
-                            card1.EnhanceHealth(100);
-                            break;
+                                card1.EnhanceAttribute(new Random().Next(0, card1.CurrentAttributes.Count), 5 + extraModifier);
+                                break;
+                            case "5":
+                                Console.WriteLine($"Specialised and restored all attributes to type {card1.Type.ToString()}");
+                                card1.Heal(15);
+                                card1.UnifyAttributesToCardType(true);
+                                break;
+                            case "6":
+                                Console.WriteLine($"Specialised all attributes to type {card1.Type.ToString()}");
+                                card1.Heal(15);
+                                card1.UnifyAttributesToCardType();
+                                card1.EnhanceAttribute(new Random().Next(0, card1.CurrentAttributes.Count), 3);
+                                break;
+                            case "7":
+                                Console.WriteLine("Lighlty enhanced all attributes and health");
+                                card1.Heal(15);
+                                card1.EnhanceHealth(25);
+                                card1.EnhanceAllAttributes(1);
+                                break;
+                            default:
+                                Console.WriteLine("Restored and Enhanced Health");
+                                card1.FullHeal();
+                                card1.EnhanceHealth(100);
+                                break;
+                        }
+
+                        Console.ReadLine();
+
+                        DisplayCardDetails(card1, 0, true);
+
+                        Console.WriteLine("Continue to next opponent...");
+                        Console.ReadLine();
                     }
-
-                    Console.ReadLine();
-
-                    DisplayCardDetails(card1, 0, true);
-
-                    Console.WriteLine("Continue to next opponent...");
-                    Console.ReadLine();
+                    else
+                    {
+                        Console.ReadLine();
+                        Console.WriteLine("VICTORY - your card will be saved");
+                        SaveState.Instance.SaveCard(card1);
+                        Console.ReadLine();
+                    }
 
                     round++;
                 }
             }
+        }
 
+        private static DataCard SelectLSavedHero(out bool loadSuccess)
+        {
+            loadSuccess= false;
+            var deck = SaveState.Instance.AdditionalDeck;
+            DataCard selectedCard = null;
+
+            foreach (var card in deck)
+            {
+                var index = deck.IndexOf(card);
+                Console.WriteLine($"{index + 1}. {card.DisplayName} - {card.Type.ToString()} - {card.OriginalPowerRating} - {card.Id}");
+            }          
+
+            var selected = false;
+
+            while (!selected)
+            {
+                Console.WriteLine("Select card - Enter the number:");
+
+                var input = Console.ReadLine();
+
+                if (input.ToLower() == "c")
+                {
+                    Console.WriteLine("Cancelled Selection - picking random card");
+                    break;
+                }
+                if (int.TryParse(input, out var res) && (res - 1) <= deck.Count)
+                {                    
+                    selectedCard = deck[res - 1];
+                    loadSuccess = selected = true;
+                }
+            }
+
+            return selectedCard ?? deck[new Random().Next(0, deck.Count)];
         }
 
         private static void DisplayCardDetails(DataCard card1, int prevAttr, bool displayOnly = false)

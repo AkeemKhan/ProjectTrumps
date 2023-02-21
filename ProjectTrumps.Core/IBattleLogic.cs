@@ -291,6 +291,15 @@ namespace ProjectTrumps.Core
 
             Messages.Add(message); 
         }        
+
+        public void DisplayConsoleMessages()
+        {
+            foreach (var msg in Messages)
+            {
+                Console.WriteLine(msg);
+            }
+
+        }
     }
 
     internal interface IBattleLogic

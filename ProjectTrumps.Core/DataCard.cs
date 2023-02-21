@@ -8,6 +8,8 @@ namespace ProjectTrumps.Core
 {
     public class DataCard : IDataCard
     {
+        public string Id { get; set; }
+
         public string DisplayName 
         { 
             get 
@@ -24,7 +26,6 @@ namespace ProjectTrumps.Core
 
         public float CurrentPowerRating => (CurrentAttributes.Sum(p => p.AttributeValue) / CurrentAttributes.Count) + (CurrentAttributes.Count(p => p.AttributeValue > 9));
         public float OriginalPowerRating => (OriginalAttributes.Sum(p => p.AttributeValue) / CurrentAttributes.Count) + (CurrentAttributes.Count(p => p.AttributeValue > 9));
-
 
         public ColourType Type { get; set; }
         public IList<TrumpsAttribute> CurrentAttributes { get; set; } = new List<TrumpsAttribute>();
@@ -145,6 +146,24 @@ namespace ProjectTrumps.Core
             EnhanceHealth(hpValue);
             EnhanceAllAttributes(attrValue);
         }
+
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            sb.Append(Guid.NewGuid().ToString());
+            sb.Append(",");
+            sb.Append(OriginalName);
+            sb.Append(",");
+            sb.Append(Type.ToString());
+            sb.Append(",");
+
+            foreach (var attr in CurrentAttributes)
+            {
+                sb.Append(attr.ToString());
+            }
+
+            return sb.ToString();
+        }
     }
 
     public interface IDataCard
@@ -167,5 +186,10 @@ namespace ProjectTrumps.Core
         public string AttributeName { get; set; }        
         public int AttributeValue { get; set; }
         public ColourType AttributeType { get; set; }
+
+        public override string ToString()
+        {
+            return $"{AttributeName},{AttributeValue},{AttributeType.ToString()},";
+        }
     }
 }

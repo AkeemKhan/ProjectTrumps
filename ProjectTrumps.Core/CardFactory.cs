@@ -16,6 +16,7 @@ namespace ProjectTrumps.Core
             TrumpsAttribute temp = null;
             TrumpsAttribute origTemp = null;
 
+            card.Id = args[0] == "Name" ? Guid.NewGuid().ToString() : args[0];
             card.OriginalName = args[1];
             card.AffiliatedName = args[1];
             card.Type = ConvertToTrumpsType(args[2]);
@@ -23,6 +24,9 @@ namespace ProjectTrumps.Core
             for (int i = 3; i < args.Length; i++)
             {
                 var paramType = i % 3;
+
+                if (args[i] == "")
+                    break;
 
                 switch (paramType)
                 {
