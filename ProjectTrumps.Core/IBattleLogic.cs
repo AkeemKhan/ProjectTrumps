@@ -19,8 +19,8 @@ namespace ProjectTrumps.Core
             var card1Attribute = card1.CurrentAttributes[attributeIndex];
             var card2Attribute = card2.CurrentAttributes[attributeIndex];
 
-            var card1AttributeStat = (card1Attribute.AttributeValue * 10) + new Random().Next(-5, 5);
-            var card2AttributeStat = (card2Attribute.AttributeValue * 10) + new Random().Next(-5, 5);
+            var card1AttributeStat = (card1Attribute.AttributeValue * 10) + new Random().Next(-5, 6);
+            var card2AttributeStat = (card2Attribute.AttributeValue * 10) + new Random().Next(-5, 6);
 
             log.AddMessage(true, $"Selected Attribute: {card1Attribute.AttributeName}");
 
@@ -109,7 +109,7 @@ namespace ProjectTrumps.Core
                     {
                         var count = card1.CurrentAttributes.Where(p => p.AttributeType == ColourType.Blue).Count();
                         var threshold = 100 - (count * 8);
-                        var evade = new Random().Next(0, 100) > threshold;
+                        var evade = new Random().Next(0, 101) > threshold;
                         damage = evade ? 0 : damage;
                     }
 
@@ -119,7 +119,7 @@ namespace ProjectTrumps.Core
 
                         var count = card1.CurrentAttributes.Where(p => p.AttributeType == ColourType.Blue).Count();
                         var threshold = 100 - (count * 8);
-                        var parry = new Random().Next(0, 100) > threshold;
+                        var parry = new Random().Next(0, 101) > threshold;
 
                         if (parry)
                         {
@@ -155,7 +155,7 @@ namespace ProjectTrumps.Core
                     {
                         var count = card2.CurrentAttributes.Where(p => p.AttributeType == ColourType.Blue).Count();
                         var threshold = 100 - (count * 10);
-                        var evade = new Random().Next(0, 100) > threshold;
+                        var evade = new Random().Next(0, 101) > threshold;
                         damage = evade ? 0 : damage;
                     }
 
@@ -165,7 +165,7 @@ namespace ProjectTrumps.Core
 
                         var count = card1.CurrentAttributes.Where(p => p.AttributeType == ColourType.Blue).Count();
                         var threshold = 100 - (count * 8);
-                        var parry = new Random().Next(0, 100) > threshold;
+                        var parry = new Random().Next(0, 101) > threshold;
 
                         if (parry)
                         {

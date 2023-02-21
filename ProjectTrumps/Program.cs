@@ -74,7 +74,7 @@ namespace MyApp // Note: actual namespace depends on the project name.
                     break;
                 case "2":
                 default:
-                    sCard1 = deck[new Random().Next(0, deck.Count - 1)];
+                    sCard1 = deck[new Random().Next(0, deck.Count)];
                     break;
             }
 
@@ -88,14 +88,14 @@ namespace MyApp // Note: actual namespace depends on the project name.
 
             var difficulty = SelectDifficulty();
 
-            opponents.Enqueue(deck[new Random().Next(0, deck.Count - 1)]);
-            opponents.Enqueue(deck[new Random().Next(0, deck.Count - 1)]);
-            opponents.Enqueue(deck[new Random().Next(0, deck.Count - 1)]);
-            opponents.Enqueue(deck[new Random().Next(0, deck.Count - 1)]);
-            opponents.Enqueue(deck[new Random().Next(0, deck.Count - 1)]);
-            opponents.Enqueue(deck[new Random().Next(0, deck.Count - 1)]);
-            opponents.Enqueue(deck[new Random().Next(0, deck.Count - 1)]);
-            opponents.Enqueue(deck[new Random().Next(0, deck.Count - 1)]);
+            opponents.Enqueue(deck[new Random().Next(0, deck.Count)]);
+            opponents.Enqueue(deck[new Random().Next(0, deck.Count)]);
+            opponents.Enqueue(deck[new Random().Next(0, deck.Count)]);
+            opponents.Enqueue(deck[new Random().Next(0, deck.Count)]);
+            opponents.Enqueue(deck[new Random().Next(0, deck.Count)]);
+            opponents.Enqueue(deck[new Random().Next(0, deck.Count)]);
+            opponents.Enqueue(deck[new Random().Next(0, deck.Count)]);
+            opponents.Enqueue(deck[new Random().Next(0, deck.Count)]);
 
             var maxOpponents = opponents.Count;
 
@@ -132,7 +132,7 @@ namespace MyApp // Note: actual namespace depends on the project name.
 
                 for(int i = 1; i <= round; i++)
                 {
-                    card2.EnhanceAttribute(new Random().Next(0, card1.CurrentAttributes.Count - 1),1);
+                    card2.EnhanceAttribute(new Random().Next(0, card1.CurrentAttributes.Count),1);
                 }
 
                 if (round < maxOpponents)
@@ -147,9 +147,9 @@ namespace MyApp // Note: actual namespace depends on the project name.
                     Console.WriteLine($"----------- FINAL ROUND - {card2.DisplayName} is the final enemy!");
                     Console.WriteLine($"------------------------------------------------------------");
                     
-                    card2.EnhanceAttribute(new Random().Next(0, card1.CurrentAttributes.Count - 1), 5);
-                    card2.EnhanceAttribute(new Random().Next(0, card1.CurrentAttributes.Count - 1), 5);
-                    card2.EnhanceAttribute(new Random().Next(0, card1.CurrentAttributes.Count - 1), 5);
+                    card2.EnhanceAttribute(new Random().Next(0, card1.CurrentAttributes.Count), 5);
+                    card2.EnhanceAttribute(new Random().Next(0, card1.CurrentAttributes.Count), 5);
+                    card2.EnhanceAttribute(new Random().Next(0, card1.CurrentAttributes.Count), 5);
                 }
 
                 var playerTurn = true;
@@ -238,7 +238,7 @@ namespace MyApp // Note: actual namespace depends on the project name.
                         {
                             Console.WriteLine("******************************************************************");
                             SoloBattleLogic.EvaluateBattle(card1, card2, selectedAttribute, damageLimit, out var log);
-                            SoloBattleLogic.ModifyAttribute(card1, selectedAttribute, usingHero? heroUseModifier : useModifier);
+                            SoloBattleLogic.ModifyAttribute(card1, selectedAttribute, useModifier);
 
                             foreach (var msg in log.Messages)
                             {
@@ -271,7 +271,7 @@ namespace MyApp // Note: actual namespace depends on the project name.
                         else
                         {
                             Console.WriteLine("******************************************************************");
-                            var randomAttributeSelected = aiChosenCommands[new Random().Next(0, aiChosenCommands.Count - 1)];
+                            var randomAttributeSelected = aiChosenCommands[new Random().Next(0, aiChosenCommands.Count)];
                             SoloBattleLogic.EvaluateBattle(card1, card2, randomAttributeSelected, damageLimit, out var log);
                             SoloBattleLogic.ModifyAttribute(card2, randomAttributeSelected, useModifier);
 
@@ -416,20 +416,21 @@ namespace MyApp // Note: actual namespace depends on the project name.
                             break;
                         case "3":
                             Console.WriteLine("Enhanced current attributes");
-                            card1.Heal(20);
-                            card1.EnhanceAllAttributes(1);
-                            card1.EnhanceAttribute(new Random().Next(0, card1.CurrentAttributes.Count - 1), 1);
+                            // card1.Heal(20);
+                            card1.EnhanceAllAttributes(2);
+                            // card1.EnhanceAttribute(new Random().Next(0, card1.CurrentAttributes.Count), 1);
                             break;
                         case "4":
                             Console.WriteLine("Greatly enhanced a single attribute");
                             var extraModifier = 0;
+
                             if (usingHero)
                             {
                                 heroUpgrade++;
                                 extraModifier = 1 + heroUpgrade;
                             }
 
-                            card1.EnhanceAttribute(new Random().Next(0, card1.CurrentAttributes.Count - 1), 5 + extraModifier);
+                            card1.EnhanceAttribute(new Random().Next(0, card1.CurrentAttributes.Count), 5 + extraModifier);
                             break;
                         case "5":
                             Console.WriteLine($"Specialised and restored all attributes to type {card1.Type.ToString()}");
@@ -440,12 +441,12 @@ namespace MyApp // Note: actual namespace depends on the project name.
                             Console.WriteLine($"Specialised all attributes to type {card1.Type.ToString()}");
                             card1.Heal(15);
                             card1.UnifyAttributesToCardType();
-                            card1.EnhanceAttribute(new Random().Next(0, card1.CurrentAttributes.Count - 1), 3);
+                            card1.EnhanceAttribute(new Random().Next(0, card1.CurrentAttributes.Count), 3);
                             break;
                         case "7":
                             Console.WriteLine("Lighlty enhanced all attributes and health");
                             card1.Heal(15);
-                            card1.EnhanceHealth(50);
+                            card1.EnhanceHealth(25);
                             card1.EnhanceAllAttributes(1);
                             break;
                         default:
@@ -624,7 +625,7 @@ namespace MyApp // Note: actual namespace depends on the project name.
                 card.MainAttributes = CardFactory.Instance.CopyAttributes(card.CurrentAttributes);                    
             }
 
-            var newCard = deck[new Random().Next(0, deck.Count - 1)];
+            var newCard = deck[new Random().Next(0, deck.Count)];
             card.Health += 15;
             card.ReplaceAttributes(newCard);
             card.Type = newCard.Type;

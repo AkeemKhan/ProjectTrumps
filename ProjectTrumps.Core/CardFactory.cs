@@ -100,7 +100,7 @@ namespace ProjectTrumps.Core
                     return ColourType.Green;
                     break;
                 default:
-                    return (ColourType)new Random().Next(1, 3);
+                    return (ColourType)new Random().Next(1, 4);
                     break;
             }
         }
