@@ -70,7 +70,7 @@ namespace MyApp // Note: actual namespace depends on the project name.
                             break;
                     }
 
-                    sCard1 = CardFactory.Instance.GenerateCard(nameInput, deck.FirstOrDefault().Attributes, (ColourType)typeInt);
+                    sCard1 = CardFactory.Instance.GenerateCard(nameInput, deck.FirstOrDefault().CurrentAttributes, (ColourType)typeInt);
                     break;
                 case "2":
                 default:
@@ -105,15 +105,15 @@ namespace MyApp // Note: actual namespace depends on the project name.
             while (opponents.Count > 0)
             {
                 sCard2 = opponents.Dequeue();
-                var hp = 100 + ((round - 1) * 30);
+                var hp = 100 + ((round - 1) * 20);
                 
                 if (round == 1)
                 {
                     card1 = new DataCard() 
                     {
                         OriginalName = sCard1.OriginalName, 
-                        Attributes = CardFactory.Instance.CopyAttributes(sCard1.Attributes), 
-                        OriginalAttributes = CardFactory.Instance.CopyAttributes(sCard1.Attributes),
+                        CurrentAttributes = CardFactory.Instance.CopyAttributes(sCard1.CurrentAttributes), 
+                        OriginalAttributes = CardFactory.Instance.CopyAttributes(sCard1.CurrentAttributes),
                         Type = sCard1.Type,
                         Health = hp, 
                         MaxHealth = hp 
@@ -123,8 +123,8 @@ namespace MyApp // Note: actual namespace depends on the project name.
                 var card2 = new DataCard() 
                 { 
                     OriginalName = sCard2.OriginalName, 
-                    Attributes = CardFactory.Instance.CopyAttributes(sCard2.Attributes),
-                    OriginalAttributes = CardFactory.Instance.CopyAttributes(sCard2.Attributes),
+                    CurrentAttributes = CardFactory.Instance.CopyAttributes(sCard2.CurrentAttributes),
+                    OriginalAttributes = CardFactory.Instance.CopyAttributes(sCard2.CurrentAttributes),
                     Type = sCard2.Type,
                     Health = hp, 
                     MaxHealth = hp 
@@ -132,18 +132,24 @@ namespace MyApp // Note: actual namespace depends on the project name.
 
                 for(int i = 1; i <= round; i++)
                 {
-                    card2.EnhanceAttribute(new Random().Next(0, card1.Attributes.Count - 1),1);
+                    card2.EnhanceAttribute(new Random().Next(0, card1.CurrentAttributes.Count - 1),1);
                 }
 
                 if (round < maxOpponents)
                 {
-                    Console.WriteLine($"ROUND {round} - {card2.DisplayName}");
+                    Console.WriteLine($"------------------------------------------------------------");
+                    Console.WriteLine($"----------- ROUND {round} - {card2.DisplayName}");
+                    Console.WriteLine($"------------------------------------------------------------");
                 }
                 if (round == maxOpponents)
                 {
-                    Console.WriteLine($"{ card2.DisplayName} is the final enemy!");
-                    card2.EnhanceAttribute(new Random().Next(0, card1.Attributes.Count - 1), 5);
-                    card2.EnhanceAttribute(new Random().Next(0, card1.Attributes.Count - 1), 5);
+                    Console.WriteLine($"------------------------------------------------------------");
+                    Console.WriteLine($"----------- FINAL ROUND - {card2.DisplayName} is the final enemy!");
+                    Console.WriteLine($"------------------------------------------------------------");
+                    
+                    card2.EnhanceAttribute(new Random().Next(0, card1.CurrentAttributes.Count - 1), 5);
+                    card2.EnhanceAttribute(new Random().Next(0, card1.CurrentAttributes.Count - 1), 5);
+                    card2.EnhanceAttribute(new Random().Next(0, card1.CurrentAttributes.Count - 1), 5);
                 }
 
                 var playerTurn = true;
@@ -188,7 +194,7 @@ namespace MyApp // Note: actual namespace depends on the project name.
 
                         if (prevAttr >= 0)
                         {
-                            Console.WriteLine($"Previous used: {card1.Attributes[prevAttr].AttributeName}");
+                            Console.WriteLine($"Previous used: {card1.CurrentAttributes[prevAttr].AttributeName}");
                         }
                         Console.WriteLine();
 
@@ -216,7 +222,7 @@ namespace MyApp // Note: actual namespace depends on the project name.
                                     continue;
 
 
-                                if (res < card1.Attributes.Count)
+                                if (res < card1.CurrentAttributes.Count)
                                 {
                                     hasSelected = true;
                                     prevAttr = res;
@@ -341,7 +347,7 @@ namespace MyApp // Note: actual namespace depends on the project name.
                     Console.ReadLine();
                 }
 
-                DisplayComparison(card1, card2);
+                PostGameSummary(card1, card2);
 
                 if (card1.Health <= 0)
                 {
@@ -350,14 +356,40 @@ namespace MyApp // Note: actual namespace depends on the project name.
                 }
                 else
                 {
+                    Console.WriteLine();
+                    DisplayCardDetails(card1, 0, true);
+
+                    if (usingHero && card1.MainAttributes.Any())
+                    {
+                        Console.WriteLine();
+                        Console.WriteLine("Restore main card?");
+                        Console.WriteLine();
+                        Console.WriteLine("1: Yes");
+                        Console.WriteLine("2: No");
+
+                        Console.WriteLine();
+
+                        var resInput = Console.ReadLine();
+                        if (resInput == "1") 
+                        {
+                            card1.RestoreMainAttributes();
+                            Console.WriteLine();
+                            Console.WriteLine("Restored Main card...");
+                            DisplayCardDetails(card1, 0, true);
+                            Console.WriteLine();
+                            Console.ReadLine();
+                        }
+                    }
+
                     Console.WriteLine("Select Reward:");
                     Console.WriteLine();
                     Console.WriteLine("1: Enhance Health");
                     Console.WriteLine("2: Replenish Attributes (Heroes also slighly improve attributes)");
                     Console.WriteLine("3: Enhance All Attributes");
-                    Console.WriteLine("4: Enhance Single Attributes - LOTS");
-                    Console.WriteLine("5: Specialise Types");
-                    Console.WriteLine("6: All Minor Enhance");
+                    Console.WriteLine("4: Greatly Enhance Single Random Attributes");
+                    Console.WriteLine("5: Specialise Types - (Restore attributes)");
+                    Console.WriteLine("6: Specialise Types - (Keep attributes and Enhance a random attribute)");
+                    Console.WriteLine("7: All Minor Enhance");
 
                     Console.WriteLine();
 
@@ -385,7 +417,8 @@ namespace MyApp // Note: actual namespace depends on the project name.
                         case "3":
                             Console.WriteLine("Enhanced current attributes");
                             card1.Heal(20);
-                            card1.EnhanceAllAttributes(3);
+                            card1.EnhanceAllAttributes(1);
+                            card1.EnhanceAttribute(new Random().Next(0, card1.CurrentAttributes.Count - 1), 1);
                             break;
                         case "4":
                             Console.WriteLine("Greatly enhanced a single attribute");
@@ -396,16 +429,22 @@ namespace MyApp // Note: actual namespace depends on the project name.
                                 extraModifier = 1 + heroUpgrade;
                             }
 
-                            card1.EnhanceAttribute(new Random().Next(0, card1.Attributes.Count - 1), 5 + extraModifier);
+                            card1.EnhanceAttribute(new Random().Next(0, card1.CurrentAttributes.Count - 1), 5 + extraModifier);
                             break;
                         case "5":
-                            Console.WriteLine($"Specialised all attributes to type {card1.Type.ToString()}");
-                            card1.Heal(20);
-                            card1.UnifyAttributesToCardType();
+                            Console.WriteLine($"Specialised and restored all attributes to type {card1.Type.ToString()}");
+                            card1.Heal(15);
+                            card1.UnifyAttributesToCardType(true);
                             break;
                         case "6":
+                            Console.WriteLine($"Specialised all attributes to type {card1.Type.ToString()}");
+                            card1.Heal(15);
+                            card1.UnifyAttributesToCardType();
+                            card1.EnhanceAttribute(new Random().Next(0, card1.CurrentAttributes.Count - 1), 3);
+                            break;
+                        case "7":
                             Console.WriteLine("Lighlty enhanced all attributes and health");
-                            card1.Heal(20);
+                            card1.Heal(15);
                             card1.EnhanceHealth(50);
                             card1.EnhanceAllAttributes(1);
                             break;
@@ -416,7 +455,6 @@ namespace MyApp // Note: actual namespace depends on the project name.
                             break;
                     }
 
-                    Console.WriteLine("Restored and Enhanced Health");
                     Console.ReadLine();
 
                     DisplayCardDetails(card1, 0, true);
@@ -434,15 +472,15 @@ namespace MyApp // Note: actual namespace depends on the project name.
         {
             Console.WriteLine($"---- {card1.DisplayName} ({card1.Type.ToString()}) ----");
 
-            for (int i = 0; i < card1.Attributes.Count; i++)
+            for (int i = 0; i < card1.CurrentAttributes.Count; i++)
             {
                 if (i == prevAttr && !displayOnly)
                 {
-                    Console.WriteLine($"{(i + 1)} - {card1.Attributes[i].AttributeName} - {card1.Attributes[i].AttributeValue} - CANNOT USE SAME ATTRIBUTE TWICE IN A ROW");
+                    Console.WriteLine($"{(i + 1)} - {card1.CurrentAttributes[i].AttributeName} - {card1.CurrentAttributes[i].AttributeValue} - CANNOT USE SAME ATTRIBUTE TWICE IN A ROW");
                 }
                 else
                 {
-                    Console.WriteLine($"{(i + 1)} - {card1.Attributes[i].AttributeName} - {card1.Attributes[i].AttributeValue} - ({card1.Attributes[i].AttributeType})");
+                    Console.WriteLine($"{(i + 1)} - {card1.CurrentAttributes[i].AttributeName} - {card1.CurrentAttributes[i].AttributeValue} - ({card1.CurrentAttributes[i].AttributeType})");
                 }
             }
         }
@@ -500,13 +538,13 @@ namespace MyApp // Note: actual namespace depends on the project name.
 
         private static void IntialiseVeryHard(DataCard card1, DataCard card2, List<int> aiChosenCommands)
         {
-            for (int i = 0; i < card1.Attributes.Count; i++)
+            for (int i = 0; i < card1.CurrentAttributes.Count; i++)
             {
                 aiChosenCommands.Add(i);
             }
-            for (int i = 0; i < card1.Attributes.Count; i++)
+            for (int i = 0; i < card1.CurrentAttributes.Count; i++)
             {
-                if (card1.Attributes[i].AttributeValue < card2.Attributes[i].AttributeValue)
+                if (card1.CurrentAttributes[i].AttributeValue < card2.CurrentAttributes[i].AttributeValue)
                 {
                     aiChosenCommands.Add(i);
                     aiChosenCommands.Add(i);
@@ -520,13 +558,13 @@ namespace MyApp // Note: actual namespace depends on the project name.
 
         private static void InitialiseHard(DataCard card1, DataCard card2, List<int> aiChosenCommands)
         {
-            for (int i = 0; i < card1.Attributes.Count; i++)
+            for (int i = 0; i < card1.CurrentAttributes.Count; i++)
             {
                 aiChosenCommands.Add(i);
             }
-            for (int i = 0; i < card1.Attributes.Count; i++)
+            for (int i = 0; i < card1.CurrentAttributes.Count; i++)
             {
-                if (card1.Attributes[i].AttributeValue < card2.Attributes[i].AttributeValue)
+                if (card1.CurrentAttributes[i].AttributeValue < card2.CurrentAttributes[i].AttributeValue)
                 {
                     aiChosenCommands.Add(i);
                     aiChosenCommands.Add(i);
@@ -538,13 +576,13 @@ namespace MyApp // Note: actual namespace depends on the project name.
 
         private static void InitialiseNormal(DataCard card1, DataCard card2, List<int> aiChosenCommands)
         {
-            for (int i = 0; i < card1.Attributes.Count; i++)
+            for (int i = 0; i < card1.CurrentAttributes.Count; i++)
             {
                 aiChosenCommands.Add(i);
             }
-            for (int i = 0; i < card1.Attributes.Count; i++)
+            for (int i = 0; i < card1.CurrentAttributes.Count; i++)
             {
-                if (card1.Attributes[i].AttributeValue < card2.Attributes[i].AttributeValue)
+                if (card1.CurrentAttributes[i].AttributeValue < card2.CurrentAttributes[i].AttributeValue)
                 {
                     aiChosenCommands.Add(i);
                     aiChosenCommands.Add(i);
@@ -554,30 +592,37 @@ namespace MyApp // Note: actual namespace depends on the project name.
 
         private static void InitialiseEasy(DataCard card1, List<int> aiChosenCommands)
         {
-            for (int i = 0; i < card1.Attributes.Count; i++)
+            for (int i = 0; i < card1.CurrentAttributes.Count; i++)
             {
                 aiChosenCommands.Add(i);
             }
         }
 
-        private static void DisplayComparison(DataCard card1, DataCard card2)
+        private static void PostGameSummary(DataCard card1, DataCard card2)
         {
+            Console.WriteLine($"------------- POST MATCH SUMMARY -------------------");
             Console.WriteLine($"---- {card1.DisplayName} vs {card2.DisplayName} ----");
             var idx = 0;
-            for (int i = 0; i < card1.Attributes.Count; i++)
+            for (int i = 0; i < card1.CurrentAttributes.Count; i++)
             {
-                var winnerName = card1.Attributes[i].AttributeValue == card2.Attributes[i].AttributeValue
+                var winnerName = card1.CurrentAttributes[i].AttributeValue == card2.CurrentAttributes[i].AttributeValue
                     ? ""
-                    : card1.Attributes[i].AttributeValue > card2.Attributes[i].AttributeValue
+                    : card1.CurrentAttributes[i].AttributeValue > card2.CurrentAttributes[i].AttributeValue
                     ? card1.OriginalName
                     : card2.OriginalName;
 
-                Console.WriteLine($"{card1.Attributes[i].AttributeValue} - {card1.Attributes[i].AttributeName} - {card2.Attributes[i].AttributeValue} ({winnerName})");
+                Console.WriteLine($"{card1.CurrentAttributes[i].AttributeValue} - {card1.CurrentAttributes[i].AttributeName} - {card2.CurrentAttributes[i].AttributeValue} ({winnerName})");
             }
+            Console.WriteLine($"----------------------------------------------------");
+            Console.WriteLine();
         }
 
         private static void ChangeCard(List<DataCard> deck, DataCard card, bool displayChangedStats = true)
         {
+            if (!card.MainAttributes.Any()) 
+            {
+                card.MainAttributes = CardFactory.Instance.CopyAttributes(card.CurrentAttributes);                    
+            }
 
             var newCard = deck[new Random().Next(0, deck.Count - 1)];
             card.Health += 15;
@@ -592,9 +637,9 @@ namespace MyApp // Note: actual namespace depends on the project name.
                 Console.WriteLine();
                 Console.WriteLine($"---- {card.DisplayName} ----");
 
-                for (int i = 0; i < card.Attributes.Count; i++)
+                for (int i = 0; i < card.CurrentAttributes.Count; i++)
                 {
-                    Console.WriteLine($"{(i + 1)} - {card.Attributes[i].AttributeName} - {card.Attributes[i].AttributeValue} - ({card.Attributes[i].AttributeType})");
+                    Console.WriteLine($"{(i + 1)} - {card.CurrentAttributes[i].AttributeName} - {card.CurrentAttributes[i].AttributeValue} - ({card.CurrentAttributes[i].AttributeType})");
                 }
             }
         }

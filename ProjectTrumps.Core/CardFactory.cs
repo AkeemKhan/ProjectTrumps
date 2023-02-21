@@ -33,7 +33,7 @@ namespace ProjectTrumps.Core
                         temp.AttributeName = args[i];
                         origTemp.AttributeName = args[i];
 
-                        card.Attributes.Add(temp);
+                        card.CurrentAttributes.Add(temp);
                         card.OriginalAttributes.Add(temp);
                         break;
                     case 1:
@@ -53,21 +53,21 @@ namespace ProjectTrumps.Core
             return card;
         }
 
-        public DataCard GenerateCard (string name, IList<TrumpsAttribute> attributes, ColourType type) 
+        public DataCard GenerateCard(string name, IList<TrumpsAttribute> attributes, ColourType type) 
         {
             var card = new DataCard();
 
-            card.Attributes = CopyAttributes(attributes);
+            card.CurrentAttributes = CopyAttributes(attributes);
             card.OriginalName = name;
             card.Type= type;
 
-            foreach (var attr in card.Attributes)
+            foreach (var attr in card.CurrentAttributes)
             {
                 attr.AttributeValue = 5;
                 attr.AttributeType = (ColourType)new Random().Next(1, 4);
             }
 
-            card.OriginalAttributes = CopyAttributes(card.Attributes);
+            card.OriginalAttributes = CopyAttributes(card.CurrentAttributes);
 
             return card;
         }

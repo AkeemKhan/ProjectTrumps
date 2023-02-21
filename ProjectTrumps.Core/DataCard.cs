@@ -22,13 +22,17 @@ namespace ProjectTrumps.Core
         public string OriginalName { get; set; }
         public string AffiliatedName { get; set; }
 
-        public float CurrentPowerRating => (Attributes.Sum(p => p.AttributeValue) / Attributes.Count) + (Attributes.Count(p => p.AttributeValue > 9));
-        public float OriginalPowerRating => (OriginalAttributes.Sum(p => p.AttributeValue) / Attributes.Count) + (Attributes.Count(p => p.AttributeValue > 9));
+        public float CurrentPowerRating => (CurrentAttributes.Sum(p => p.AttributeValue) / CurrentAttributes.Count) + (CurrentAttributes.Count(p => p.AttributeValue > 9));
+        public float OriginalPowerRating => (OriginalAttributes.Sum(p => p.AttributeValue) / CurrentAttributes.Count) + (CurrentAttributes.Count(p => p.AttributeValue > 9));
 
 
         public ColourType Type { get; set; }
-        public IList<TrumpsAttribute> Attributes { get; set; } = new List<TrumpsAttribute>();
+        public IList<TrumpsAttribute> CurrentAttributes { get; set; } = new List<TrumpsAttribute>();
         public IList<TrumpsAttribute> OriginalAttributes { get; set; } = new List<TrumpsAttribute>();
+        public IList<TrumpsAttribute> MainAttributes { get; set; } = new List<TrumpsAttribute>();
+
+        public bool HasSwapped => MainAttributes.Any();
+
         public int Health { get; set; } = 100;
         public int MaxHealth { get; set; } = 100;
 
@@ -36,16 +40,35 @@ namespace ProjectTrumps.Core
         {
             AffiliatedName = newCard.OriginalName;
 
-            Attributes.Clear();
-            foreach (var newAttr in newCard.Attributes)
+            CurrentAttributes.Clear();
+            foreach (var newAttr in newCard.CurrentAttributes)
             {
-                Attributes.Add(new TrumpsAttribute
+                CurrentAttributes.Add(new TrumpsAttribute
                 {
                     AttributeName = newAttr.AttributeName,
                     AttributeType = newAttr.AttributeType,
                     AttributeValue= newAttr.AttributeValue,
                 });
             }
+        }
+        public void RestoreMainAttributes(bool restoreHealth = true)
+        {
+            AffiliatedName = "";
+
+            if (restoreHealth)
+                FullHeal();
+
+            CurrentAttributes.Clear();
+            foreach (var newAttr in MainAttributes)
+            {
+                CurrentAttributes.Add(new TrumpsAttribute
+                {
+                    AttributeName = newAttr.AttributeName,
+                    AttributeType = newAttr.AttributeType,
+                    AttributeValue = newAttr.AttributeValue,
+                });
+            }
+            MainAttributes.Clear();
         }
 
         public void RestoreAttributes(bool restoreHealth = true)
@@ -55,10 +78,10 @@ namespace ProjectTrumps.Core
             if (restoreHealth)
                 FullHeal();
 
-            Attributes.Clear();
+            CurrentAttributes.Clear();
             foreach (var newAttr in OriginalAttributes)
             {
-                Attributes.Add(new TrumpsAttribute
+                CurrentAttributes.Add(new TrumpsAttribute
                 {
                     AttributeName = newAttr.AttributeName,
                     AttributeType = newAttr.AttributeType,
@@ -69,7 +92,7 @@ namespace ProjectTrumps.Core
 
         public void EnhanceAllAttributes(int value)
         {
-            for (int i = 0; i < Attributes.Count; i++)
+            for (int i = 0; i < CurrentAttributes.Count; i++)
             {
                 EnhanceAttribute(i, value);
             }
@@ -77,25 +100,25 @@ namespace ProjectTrumps.Core
 
         public void EnhanceOriginalAttribute(int index, int value)
         {
-            Attributes[index].AttributeValue = OriginalAttributes[index].AttributeValue;
-            Attributes[index].AttributeValue += value;
+            CurrentAttributes[index].AttributeValue = OriginalAttributes[index].AttributeValue;
+            CurrentAttributes[index].AttributeValue += value;
         }
 
         public void EnhanceAttribute(int index, int value)
         {
-            Attributes[index].AttributeValue += value;
+            CurrentAttributes[index].AttributeValue += value;
         }
 
         public void ModifyAttributeType(int index, ColourType type)
         {
-            Attributes[index].AttributeType = type;
+            CurrentAttributes[index].AttributeType = type;
         }
 
-        public void UnifyAttributesToCardType()
+        public void UnifyAttributesToCardType(bool restore = false)
         {
-            RestoreAttributes(true);
+            RestoreAttributes(false);
 
-            for (int i = 0; i < Attributes.Count; i++)
+            for (int i = 0; i < CurrentAttributes.Count; i++)
             {
                 ModifyAttributeType(i, Type);
             }
@@ -128,7 +151,7 @@ namespace ProjectTrumps.Core
     {        
         string OriginalName { get; set; }
         ColourType Type { get; set; }
-        IList<TrumpsAttribute> Attributes { get; set; }
+        IList<TrumpsAttribute> CurrentAttributes { get; set; }
     }
 
     public enum ColourType

@@ -16,8 +16,8 @@ namespace ProjectTrumps.Core
             log = new BattleLog();
             log.OnlyLogResult = true;
 
-            var card1Attribute = card1.Attributes[attributeIndex];
-            var card2Attribute = card2.Attributes[attributeIndex];
+            var card1Attribute = card1.CurrentAttributes[attributeIndex];
+            var card2Attribute = card2.CurrentAttributes[attributeIndex];
 
             var card1AttributeStat = (card1Attribute.AttributeValue * 10) + new Random().Next(-5, 5);
             var card2AttributeStat = (card2Attribute.AttributeValue * 10) + new Random().Next(-5, 5);
@@ -107,7 +107,7 @@ namespace ProjectTrumps.Core
                 {
                     if (card1.Type == ColourType.Blue)
                     {
-                        var count = card1.Attributes.Where(p => p.AttributeType == ColourType.Blue).Count();
+                        var count = card1.CurrentAttributes.Where(p => p.AttributeType == ColourType.Blue).Count();
                         var threshold = 100 - (count * 8);
                         var evade = new Random().Next(0, 100) > threshold;
                         damage = evade ? 0 : damage;
@@ -117,7 +117,7 @@ namespace ProjectTrumps.Core
                     {
                         log.AddMessage(true, $"{card1.DisplayName} evaded!");
 
-                        var count = card1.Attributes.Where(p => p.AttributeType == ColourType.Blue).Count();
+                        var count = card1.CurrentAttributes.Where(p => p.AttributeType == ColourType.Blue).Count();
                         var threshold = 100 - (count * 8);
                         var parry = new Random().Next(0, 100) > threshold;
 
@@ -140,7 +140,7 @@ namespace ProjectTrumps.Core
                     // Additional burn
                     if (card2.Type == ColourType.Red)
                     {
-                        var count = card2.Attributes.Where(p => p.AttributeType == ColourType.Red).Count();
+                        var count = card2.CurrentAttributes.Where(p => p.AttributeType == ColourType.Red).Count();
                         var additionalDamage = count * 3;
 
                         var healthBefore = card2.Health;
@@ -153,7 +153,7 @@ namespace ProjectTrumps.Core
                 {
                     if (card2.Type == ColourType.Blue)
                     {
-                        var count = card2.Attributes.Where(p => p.AttributeType == ColourType.Blue).Count();
+                        var count = card2.CurrentAttributes.Where(p => p.AttributeType == ColourType.Blue).Count();
                         var threshold = 100 - (count * 10);
                         var evade = new Random().Next(0, 100) > threshold;
                         damage = evade ? 0 : damage;
@@ -163,7 +163,7 @@ namespace ProjectTrumps.Core
                     {
                         log.AddMessage(true, $"{card2.DisplayName} evaded!");
 
-                        var count = card1.Attributes.Where(p => p.AttributeType == ColourType.Blue).Count();
+                        var count = card1.CurrentAttributes.Where(p => p.AttributeType == ColourType.Blue).Count();
                         var threshold = 100 - (count * 8);
                         var parry = new Random().Next(0, 100) > threshold;
 
@@ -186,7 +186,7 @@ namespace ProjectTrumps.Core
                     // Additional burn
                     if (card1.Type == ColourType.Red)
                     {
-                        var count = card1.Attributes.Where(p => p.AttributeType == ColourType.Red).Count();
+                        var count = card1.CurrentAttributes.Where(p => p.AttributeType == ColourType.Red).Count();
                         var additionalDamage = count * 3;
 
                         var healthBefore = card2.Health;
@@ -215,7 +215,7 @@ namespace ProjectTrumps.Core
                 // Post heal
                 if (card1.Type == ColourType.Green)
                 {
-                    var count = card1.Attributes.Where(p => p.AttributeType == ColourType.Green).Count();
+                    var count = card1.CurrentAttributes.Where(p => p.AttributeType == ColourType.Green).Count();
                     var healAmount = count * 3;
                     var healthBefore = card1.Health;
                     card1.Health += healAmount;
@@ -223,7 +223,7 @@ namespace ProjectTrumps.Core
                 }
                 if (card2.Type == ColourType.Green)
                 {
-                    var count = card2.Attributes.Where(p => p.AttributeType == ColourType.Green).Count();
+                    var count = card2.CurrentAttributes.Where(p => p.AttributeType == ColourType.Green).Count();
                     var healAmount = count;
                     var healthBefore = card2.Health;
                     card2.Health += healAmount;
@@ -275,7 +275,7 @@ namespace ProjectTrumps.Core
 
         public static void ModifyAttribute(DataCard card, int attributeIndex, int modifier)
         {
-            card.Attributes[attributeIndex].AttributeValue += modifier;
+            card.CurrentAttributes[attributeIndex].AttributeValue += modifier;
         }
     }
 
