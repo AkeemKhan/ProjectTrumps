@@ -16,6 +16,25 @@ namespace ProjectTrumps.Core
             TrumpsAttribute temp = null;
             TrumpsAttribute origTemp = null;
 
+            // TODO: Validate string args
+
+            var saveCluster = args[0].Split("|");
+            string id = "";
+
+            if (saveCluster.Length > 1)
+            {
+                // TODO: Validate cluster
+
+                id = saveCluster[0];
+                card.MaxHealth = int.Parse(saveCluster[1]);
+                card.Health = int.Parse(saveCluster[1]);
+            }
+            else
+            {
+                card.MaxHealth = 100;
+                card.Health = 100;                
+            }
+
             card.Id = args[0] == "Name" ? Guid.NewGuid().ToString() : args[0];
             card.OriginalName = args[1];
             card.AffiliatedName = args[1];

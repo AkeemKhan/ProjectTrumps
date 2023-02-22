@@ -9,6 +9,7 @@ namespace ProjectTrumps.Core
     public class DataCard : IDataCard
     {
         public string Id { get; set; }
+        public int Level { get; set; } = 1;    
 
         public string DisplayName 
         { 
@@ -150,7 +151,10 @@ namespace ProjectTrumps.Core
         public override string ToString()
         {
             var sb = new StringBuilder();
-            sb.Append(Guid.NewGuid().ToString());
+
+            // ID|MAXHP|LEVEL
+            var saveSegment = $"{Id}|{MaxHealth.ToString()}|{Level.ToString()}";
+            sb.Append(saveSegment);
             sb.Append(",");
             sb.Append(OriginalName);
             sb.Append(",");

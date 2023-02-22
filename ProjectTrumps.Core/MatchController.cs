@@ -8,7 +8,7 @@ namespace ProjectTrumps.Core
 {
     public class MatchController
     {
-        public int DamageLimit { get; set; }
+        public int DamageLimitPerLevel { get; set; }
         public int UseCost { get; set; }
     }
 }

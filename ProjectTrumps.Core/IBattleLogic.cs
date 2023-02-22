@@ -8,11 +8,8 @@ namespace ProjectTrumps.Core
 {
     public class SoloBattleLogic : IBattleLogic
     {       
-        public static void EvaluateBattle(DataCard card1, DataCard card2, int attributeIndex, int damageLimit, out BattleLog log)
+        public static void EvaluateBattle(DataCard card1, DataCard card2, int attributeIndex, int damageLimitPerLevel, out BattleLog log)
         {
-            if (damageLimit == 0)
-                damageLimit = 100;
-
             log = new BattleLog();
             log.OnlyLogResult = true;
 
@@ -76,8 +73,8 @@ namespace ProjectTrumps.Core
                 damageCard1 = false;
                 damage = card1AttributeStat - card2AttributeStat;
 
-                if (damage > damageLimit)
-                    damage = damageLimit;
+                if (damage > card1.Level * damageLimitPerLevel)
+                    damage = card1.Level * damageLimitPerLevel;
 
                 log.AddMessage(true, $"Damage to deal - {damage}");
             }
@@ -87,8 +84,8 @@ namespace ProjectTrumps.Core
                 damageCard1 = true;
                 damage = card2AttributeStat - card1AttributeStat;
 
-                if (damage > damageLimit)
-                    damage = damageLimit;
+                if (damage > card2.Level * damageLimitPerLevel)
+                    damage = card2.Level * damageLimitPerLevel;
 
                 log.AddMessage(true, $"Damage to deal - {damage}");
             }
@@ -304,5 +301,13 @@ namespace ProjectTrumps.Core
 
     internal interface IBattleLogic
     {        
+    }
+
+    public enum Difficulty
+    {
+        Easy = 1,
+        Normal = 2,
+        Hard = 3,
+        VertHard = 4,
     }
 }

@@ -13,12 +13,111 @@ namespace ProjectTrumps.Core
             Morale = new CPUMoralaController(this, 100);
         }
 
-        public List<int> Commands = new List<int>();
+        public List<int> Commands { get; set; }
         public CPUMoralaController Morale { get; set; }
         public int DamageThreshold { get; set; }
         public int DamageTakenCounter { get; set; }
         public int ChangeAtNTimesDamageTaken { get; set; }
-        public bool ChangeCard { get; set; }
+        public bool ChangeCard { get; set; }        
+        public Difficulty DifficultyLevel { get; set; }
+
+        public int ChooseCommand()
+        {
+            return Commands[new Random().Next(0, Commands.Count)];
+        }
+        public void RefreshCommands(DataCard card1, DataCard card2)
+        {
+            if (Commands == null)
+            {
+                Commands = new List<int>();
+            }
+
+            if (!(card1 != null && card2 != null))
+            {
+                return;
+            }
+
+            Commands.Clear();
+            switch (DifficultyLevel)
+            {
+                case Difficulty.Easy:
+                    InitialiseEasy(card1, card2);
+                    break;
+                case Difficulty.Normal:
+                    InitialiseNormal(card1, card2);
+                    break;
+                case Difficulty.Hard:
+                    InitialiseHard(card1, card2);
+                    break;
+                case Difficulty.VertHard:
+                    IntialiseVeryHard(card1, card2);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        public void IntialiseVeryHard(DataCard card1, DataCard card2)
+        {
+            for (int i = 0; i < card1.CurrentAttributes.Count; i++)
+            {
+                Commands.Add(i);
+            }
+            for (int i = 0; i < card1.CurrentAttributes.Count; i++)
+            {
+                if (card1.CurrentAttributes[i].AttributeValue < card2.CurrentAttributes[i].AttributeValue)
+                {
+                    Commands.Add(i);
+                    Commands.Add(i);
+                    Commands.Add(i);
+                    Commands.Add(i);
+                    Commands.Add(i);
+                    Commands.Add(i);
+                }
+            }
+        }
+
+        public void InitialiseHard(DataCard card1, DataCard card2)
+        {
+            for (int i = 0; i < card1.CurrentAttributes.Count; i++)
+            {
+                Commands.Add(i);
+            }
+            for (int i = 0; i < card1.CurrentAttributes.Count; i++)
+            {
+                if (card1.CurrentAttributes[i].AttributeValue < card2.CurrentAttributes[i].AttributeValue)
+                {
+                    Commands.Add(i);
+                    Commands.Add(i);
+                    Commands.Add(i);
+                    Commands.Add(i);
+                }
+            }
+        }
+
+        public void InitialiseNormal(DataCard card1, DataCard card2)
+        {
+            for (int i = 0; i < card1.CurrentAttributes.Count; i++)
+            {
+                Commands.Add(i);
+            }
+            for (int i = 0; i < card1.CurrentAttributes.Count; i++)
+            {
+                if (card1.CurrentAttributes[i].AttributeValue < card2.CurrentAttributes[i].AttributeValue)
+                {
+                    Commands.Add(i);
+                    Commands.Add(i);
+                }
+            }
+        }
+
+        public void InitialiseEasy(DataCard card1, DataCard card2)
+        {
+            for (int i = 0; i < card1.CurrentAttributes.Count; i++)
+            {
+                Commands.Add(i);
+            }
+        }
     }
 
     public class CPUMoralaController
