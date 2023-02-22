@@ -28,6 +28,7 @@ namespace ProjectTrumps.Core
                 id = saveCluster[0];
                 card.MaxHealth = int.Parse(saveCluster[1]);
                 card.Health = int.Parse(saveCluster[1]);
+                card.Level = int.Parse(saveCluster[2]);
             }
             else
             {

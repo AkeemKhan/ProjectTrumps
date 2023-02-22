@@ -29,9 +29,9 @@ namespace ProjectTrumps.Core
 
             Console.WriteLine("Choose Ladder starter:");
             Console.WriteLine();
-            Console.WriteLine("1: New Hero");
-            Console.WriteLine("2: Existing Hero");
-            Console.WriteLine("3: Load Hero");
+            Console.WriteLine("1: New Game");
+            Console.WriteLine("2: Existing Heroes");
+            Console.WriteLine("3: Load Game");
 
             var startInput = Console.ReadLine();
             Console.WriteLine();
