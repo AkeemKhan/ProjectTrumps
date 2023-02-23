@@ -39,7 +39,8 @@ namespace ProjectTrumps.Core
             card.Id = args[0] == "Name" ? Guid.NewGuid().ToString() : args[0];
             card.OriginalName = args[1];
             card.AffiliatedName = args[1];
-            card.Type = ConvertToTrumpsType(args[2]);
+            card.OriginalType = ConvertToTrumpsType(args[2]);
+            card.Type = ConvertToTrumpsType(args[2]);            
 
             for (int i = 3; i < args.Length; i++)
             {
@@ -81,9 +82,12 @@ namespace ProjectTrumps.Core
         {
             var card = new DataCard();
 
+            card.Id = Guid.NewGuid().ToString();
+            card.Level = 1;
             card.CurrentAttributes = CopyAttributes(attributes);
             card.OriginalName = name;
-            card.Type= type;
+            card.OriginalType = type;
+            card.Type = type;
 
             foreach (var attr in card.CurrentAttributes)
             {

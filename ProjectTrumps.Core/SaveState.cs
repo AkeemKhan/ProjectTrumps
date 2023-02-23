@@ -62,7 +62,10 @@ namespace ProjectTrumps.Core
 
             if (existing != null) 
             {
+                existing.Id = newCard.Id;
                 existing.Type = newCard.Type;
+                existing.Level = newCard.Level;
+                existing.MaxHealth = newCard.MaxHealth;
                 existing.CurrentAttributes = CardFactory.Instance.CopyAttributes(newCard.CurrentAttributes);
             }
             else

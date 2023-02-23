@@ -29,6 +29,9 @@ namespace ProjectTrumps.Core
         public float OriginalPowerRating => (OriginalAttributes.Sum(p => p.AttributeValue) / CurrentAttributes.Count) + (CurrentAttributes.Count(p => p.AttributeValue > 9));
 
         public ColourType Type { get; set; }
+        public ColourType OriginalType { get; set; }
+
+
         public IList<TrumpsAttribute> CurrentAttributes { get; set; } = new List<TrumpsAttribute>();
         public IList<TrumpsAttribute> OriginalAttributes { get; set; } = new List<TrumpsAttribute>();
         public IList<TrumpsAttribute> MainAttributes { get; set; } = new List<TrumpsAttribute>();
@@ -59,6 +62,8 @@ namespace ProjectTrumps.Core
 
             if (restoreHealth)
                 FullHeal();
+
+            Type = OriginalType;
 
             CurrentAttributes.Clear();
             foreach (var newAttr in MainAttributes)
@@ -118,7 +123,8 @@ namespace ProjectTrumps.Core
 
         public void UnifyAttributesToCardType(bool restore = false)
         {
-            RestoreAttributes(false);
+            if (restore)
+                RestoreAttributes(false);
 
             for (int i = 0; i < CurrentAttributes.Count; i++)
             {

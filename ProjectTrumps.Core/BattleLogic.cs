@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ProjectTrumps.Core
 {
-    public class SoloBattleLogic : IBattleLogic
+    public class SoloBattleLogic : BattleLogic
     {       
         public static void EvaluateBattle(DataCard card1, DataCard card2, int attributeIndex, int damageLimitPerLevel, out BattleLog log)
         {
@@ -102,130 +102,108 @@ namespace ProjectTrumps.Core
                 log.AddMessage(false, System.Environment.NewLine);
                 if (damageCard1)
                 {
-                    if (card1.Type == ColourType.Blue)
-                    {
-                        var count = card1.CurrentAttributes.Where(p => p.AttributeType == ColourType.Blue).Count();
-                        var threshold = 100 - (count * 8);
-                        var evade = new Random().Next(0, 101) > threshold;
-                        damage = evade ? 0 : damage;
-                    }
-
-                    if (damage == 0)
-                    {
-                        log.AddMessage(true, $"{card1.DisplayName} evaded!");
-
-                        var count = card1.CurrentAttributes.Where(p => p.AttributeType == ColourType.Blue).Count();
-                        var threshold = 100 - (count * 8);
-                        var parry = new Random().Next(0, 101) > threshold;
-
-                        if (parry)
-                        {
-                            var healthBefore = card2.Health;
-                            var reverseDamage = 15 + count;
-                            card2.Health -= reverseDamage;
-                            log.AddMessage(true, $"{card1.DisplayName} parried for {reverseDamage}!");
-                            log.AddMessage(true, $"{card2.DisplayName} TOOK DAMAGE: {healthBefore} >>>> {card2.Health}");
-                        }
-                    }
-                    else
-                    {
-                        var healthBefore = card1.Health;
-                        card1.Health -= damage;                        
-                        log.AddMessage(true, $"{card1.DisplayName} TOOK DAMAGE: {healthBefore} >>>> {card1.Health}");
-                    }
-
-                    // Additional burn
-                    if (card2.Type == ColourType.Red)
-                    {
-                        var count = card2.CurrentAttributes.Where(p => p.AttributeType == ColourType.Red).Count();
-                        var additionalDamage = count * 3;
-
-                        var healthBefore = card2.Health;
-                        card1.Health -= additionalDamage;
-                        log.AddMessage(true, $"{card1.DisplayName} suffers additional burn damage");
-                        log.AddMessage(true, $"{card1.DisplayName} Health: {healthBefore} >>>> {card1.Health}");
-                    }
+                    ConductBattle(card1, card2, log, damage);
                 }
                 else
                 {
-                    if (card2.Type == ColourType.Blue)
-                    {
-                        var count = card2.CurrentAttributes.Where(p => p.AttributeType == ColourType.Blue).Count();
-                        var threshold = 100 - (count * 10);
-                        var evade = new Random().Next(0, 101) > threshold;
-                        damage = evade ? 0 : damage;
-                    }
-
-                    if (damage == 0)
-                    {
-                        log.AddMessage(true, $"{card2.DisplayName} evaded!");
-
-                        var count = card1.CurrentAttributes.Where(p => p.AttributeType == ColourType.Blue).Count();
-                        var threshold = 100 - (count * 8);
-                        var parry = new Random().Next(0, 101) > threshold;
-
-                        if (parry)
-                        {
-                            var healthBefore = card2.Health;
-                            var reverseDamage = 15 + count;
-                            card1.Health -= reverseDamage;
-                            log.AddMessage(true, $"{card2.DisplayName} parried for {reverseDamage}!");
-                            log.AddMessage(true, $"{card1.DisplayName} TOOK DAMAGE: {healthBefore} >>>> {card1.Health}");
-                        }
-                    }
-                    else
-                    {
-                        var healthBefore = card2.Health;
-                        card2.Health -= damage;
-                        log.AddMessage(true, $"{card2.DisplayName} TOOK DAMAGE: {healthBefore} >>>> {card2.Health}");
-                    }
-
-                    // Additional burn
-                    if (card1.Type == ColourType.Red)
-                    {
-                        var count = card1.CurrentAttributes.Where(p => p.AttributeType == ColourType.Red).Count();
-                        var additionalDamage = count * 3;
-
-                        var healthBefore = card2.Health;
-                        card2.Health -= additionalDamage;
-                        log.AddMessage(true, $"{card2.DisplayName} suffers additional burn damage");
-                        log.AddMessage(true, $"{card2.DisplayName} TOOK DAMAGE: {healthBefore} >>>> {card2.Health}");
-                    }
+                    ConductBattle(card2, card1, log, damage);
                 }
             }
 
-            var skipHeal = false;
-
-            if (card1.Health <= 0)
-            {
-                log.AddMessage(true, $"{card1.DisplayName} has been defeated - Health: {card1.Health}");
-                skipHeal = true;
-            }
-            if (card2.Health <= 0)
-            {
-                log.AddMessage(true, $"{card2.DisplayName} has been defeated - Health: {card2.Health}");
-                skipHeal = true;
-            }
+            var skipHeal = (card1.Health <= 0) || (card2.Health <= 0);
 
             if (!skipHeal)
             {
-                // Post heal
-                if (card1.Type == ColourType.Green)
-                {
-                    var count = card1.CurrentAttributes.Where(p => p.AttributeType == ColourType.Green).Count();
-                    var healAmount = count * 3;
-                    var healthBefore = card1.Health;
-                    card1.Health += healAmount;
-                    log.AddMessage(true, $"{card1.DisplayName} healed {healthBefore} >>>> {card1.Health}");
-                }
-                if (card2.Type == ColourType.Green)
-                {
-                    var count = card2.CurrentAttributes.Where(p => p.AttributeType == ColourType.Green).Count();
-                    var healAmount = count;
-                    var healthBefore = card2.Health;
-                    card2.Health += healAmount;
-                    log.AddMessage(true, $"{card2.DisplayName} healed {healthBefore} >>>> {card2.Health}");
-                }
+                ConductPostHeal(card1, log);
+                ConductPostHeal(card2, log);                
+            }
+        }
+   
+        public static void ConductBattle(DataCard losingCard, DataCard winningCard, BattleLog log, int damage)
+        {
+            damage = ConductEvasion(losingCard, damage, log);
+
+            if (damage == 0)
+            {
+                ConductParry(losingCard, winningCard, log);
+            }
+            else
+            {
+                ConductStandardDamage(losingCard, log, damage);
+            }
+            
+            ConductAdditionalBurn(losingCard, winningCard, log);
+        }
+
+        private static void ConductAdditionalBurn(DataCard losingCard, DataCard winningCard, BattleLog log)
+        {
+            if (winningCard.Type == ColourType.Red)
+            {
+                var count = winningCard.CurrentAttributes.Where(p => p.AttributeType == ColourType.Red).Count();
+                var additionalDamage = count * 3;
+
+                var healthBefore = winningCard.Health;
+                losingCard.Health -= additionalDamage;
+                log.AddMessage(true, $"{losingCard.DisplayName} TOOK ADDITIONAL BURN DAMAGE");
+                log.AddMessage(true, $"{losingCard.DisplayName} Health: {healthBefore} >>>> {losingCard.Health}");
+            }
+        }
+
+        private static void ConductStandardDamage(DataCard losingCard, BattleLog log, int damage)
+        {
+            var healthBefore = losingCard.Health;
+            losingCard.Health -= damage;
+            log.AddMessage(true, $"{losingCard.DisplayName} TOOK DAMAGE: {healthBefore} >>>> {losingCard.Health}");
+        }
+
+        private static void ConductParry(DataCard losingCard, DataCard winningCard, BattleLog log)
+        {
+            var count = losingCard.CurrentAttributes.Where(p => p.AttributeType == ColourType.Blue).Count();
+            var threshold = 100 - (count * 8);
+            var parry = new Random().Next(0, 101) > threshold;
+
+            if (parry)
+            {
+                var healthBefore = winningCard.Health;
+                var reverseDamage = 15 + count;
+                winningCard.Health -= reverseDamage;
+                log.AddMessage(true, $"{losingCard.DisplayName} PARRIED for {reverseDamage}!");
+                log.AddMessage(true, $"{winningCard.DisplayName} TOOK DAMAGE: {healthBefore} >>>> {winningCard.Health}");
+            }
+        }
+
+        private static int ConductEvasion(DataCard losingCard, int damage, BattleLog log)
+        {
+            if (losingCard.Type == ColourType.Blue)
+            {
+                var count = losingCard.CurrentAttributes.Where(p => p.AttributeType == ColourType.Blue).Count();
+                var threshold = 100 - (count * 8);
+                var evade = new Random().Next(0, 101) > threshold;
+                damage = evade ? 0 : damage;
+                
+                if (evade)
+                    log.AddMessage(true, $"{losingCard.DisplayName} evaded!");
+            }
+            return damage;
+        }
+
+        private static void ConductPostHeal(DataCard card1, BattleLog log)
+        {
+            if (card1.Type == ColourType.Green)
+            {
+                var count = card1.CurrentAttributes.Where(p => p.AttributeType == ColourType.Green).Count();
+                var healAmount = count * 3;
+                var healthBefore = card1.Health;
+                card1.Health += healAmount;
+
+                // Handle Overheal
+                // Check if healed above maxhealth
+                // if so reduce by amount and if reduced below max health, assign max 
+                if (card1.Health > card1.MaxHealth)
+                    card1.Health = card1.Health - count < card1.MaxHealth ? card1.MaxHealth : card1.Health - count;
+
+                card1.EnhanceAttribute(new Random().Next(0, card1.CurrentAttributes.Count), 1);
+                log.AddMessage(true, $"{card1.DisplayName} healed {healthBefore} >>>> {card1.Health}");
             }
         }
 
@@ -299,7 +277,7 @@ namespace ProjectTrumps.Core
         }
     }
 
-    internal interface IBattleLogic
+    internal interface BattleLogic
     {        
     }
 

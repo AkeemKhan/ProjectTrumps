@@ -9,13 +9,12 @@ namespace ProjectTrumps.Core
 {
     public class SessionController
     {
-        public SessionController() { }
-
         public List<DataCard> Deck { get; set; }
         public Difficulty GlobalDifficulty { get; set; }
         public bool UsingHero { get; set; } = false;
 
         public int ArcadeLength { get; set; } = 8;
+        public int ChampionsLength { get; set; } = 5;
         public Queue<DataCard> ArcadeOpponents { get; set; }
         public int Round { get; set; }
 
@@ -27,77 +26,7 @@ namespace ProjectTrumps.Core
 
             Deck = SaveState.Instance.FullDeck;
 
-            Console.WriteLine("Choose Ladder starter:");
-            Console.WriteLine();
-            Console.WriteLine("1: New Game");
-            Console.WriteLine("2: Existing Heroes");
-            Console.WriteLine("3: Load Game");
-
-            var startInput = Console.ReadLine();
-            Console.WriteLine();
-
-            DataCard selectedCard1 = null;
-            DataCard selectedCard2 = null;
-
-            switch (startInput)
-            {
-                case "1":
-                    UsingHero = true;
-                    Console.WriteLine("Enter the name:");
-                    var nameInput = Console.ReadLine();
-
-                    if (string.IsNullOrEmpty(nameInput))
-                        nameInput = "Hero";
-
-                    Console.WriteLine();
-                    Console.WriteLine("Choose Type:");
-                    Console.WriteLine();
-                    Console.WriteLine("1: Red - Burn");
-                    Console.WriteLine("2: Blue - Evade/Parry");
-                    Console.WriteLine("3: Green - Heal");
-                    Console.WriteLine();
-
-                    var typeInput = Console.ReadLine();
-                    var typeInt = 1;
-                    switch (typeInput)
-                    {
-                        case "1":
-                            typeInt = 1;
-                            break;
-                        case "2":
-                            typeInt = 2;
-                            break;
-                        case "3":
-                            typeInt = 3;
-                            break;
-                        default:
-                            break;
-                    }
-
-                    selectedCard1 = CardFactory.Instance.GenerateCard(nameInput, Deck.FirstOrDefault().CurrentAttributes, (ColourType)typeInt);
-                    break;
-                case "2":
-                    selectedCard1 = Deck[new Random().Next(0, Deck.Count)];
-                    break;
-                case "3":
-                    selectedCard1 = SelectLSavedHero(out var loadedHero);
-                    UsingHero = loadedHero;
-                    break;
-                default:
-                    selectedCard1 = Deck[new Random().Next(0, Deck.Count)];
-                    break;
-            }
-
-            Console.WriteLine("Select Difficulty:");
-            Console.WriteLine();
-            Console.WriteLine("1: Easy");
-            Console.WriteLine("2: Normal");
-            Console.WriteLine("3: Hard");
-            Console.WriteLine("4: Very Hard");
-
-            GlobalDifficulty = SelectDifficulty();
-
-            InitialiseArcadeOpponents(selectedCard1.Level);
+            DataCard selectedCard1 = SelectMode();
 
             var maxOpponents = ArcadeOpponents.Count;
 
@@ -105,10 +34,10 @@ namespace ProjectTrumps.Core
             DataCard playerCard = null;
 
             while (ArcadeOpponents.Count > 0)
-            {                
+            {
                 if (Round == 1)
                 {
-                    playerCard = InitialiseCard(selectedCard1, 100, selectedCard1.Level);
+                    playerCard = InitialiseCard(selectedCard1, selectedCard1.MaxHealth, selectedCard1.Level);
                 }
 
                 var opponentCard = ArcadeOpponents.Dequeue();
@@ -129,7 +58,8 @@ namespace ProjectTrumps.Core
                 var matchController = new MatchController()
                 {
                     DamageLimitPerLevel = 10,
-                    UseCost = -3
+                    UseCost = -3,
+                    Inspect = false
                 };
 
                 var cpuController = new CPUController()
@@ -144,7 +74,7 @@ namespace ProjectTrumps.Core
                 bool retreat = false;
                 var playerTurn = true;
                 var prevAttr = -1;
-                
+
                 cpuController.RefreshCommands(playerCard, opponentCard);
 
                 Console.WriteLine();
@@ -168,12 +98,14 @@ namespace ProjectTrumps.Core
                     {
                         Console.WriteLine("------------------------------- List of Attributes: -----------------------------------------------------------");
                         Console.WriteLine();
-                        DisplayCardDetails(playerCard, prevAttr);
+
+                        DisplayCardDetails(playerCard, prevAttr, false, matchController.Inspect ? opponentCard : null);
 
                         if (prevAttr >= 0)
                         {
                             Console.WriteLine($"Previous used: {playerCard.CurrentAttributes[prevAttr].AttributeName}");
                         }
+
                         Console.WriteLine();
 
                         var hasSelected = false;
@@ -189,6 +121,12 @@ namespace ProjectTrumps.Core
                             if (input.ToLower() == "c")
                             {
                                 changeCard = true;
+                                conductBattle = false;
+                                hasSelected = true;
+                            }
+                            else if (input.ToLower() == "i")
+                            {
+                                matchController.Inspect = true;
                                 conductBattle = false;
                                 hasSelected = true;
                             }
@@ -251,7 +189,7 @@ namespace ProjectTrumps.Core
                             Console.WriteLine("CPU Changed card - Press to continue");
                             ChangeCard(Deck, opponentCard, false);
                             cpuController.ChangeCard = false;
-
+                            matchController.Inspect = false;
                             Console.ReadLine();
                         }
                         else
@@ -296,7 +234,7 @@ namespace ProjectTrumps.Core
                     break;
                 }
 
-                PostGameSummary(playerCard, opponentCard);
+                PostGameSummary(playerCard, opponentCard, Round);
 
                 if (playerCard.Health <= 0)
                 {
@@ -418,7 +356,9 @@ namespace ProjectTrumps.Core
                     else
                     {
                         Console.ReadLine();
-                        Console.WriteLine("VICTORY - your card will be saved");
+                        Console.WriteLine("VICTORY - Enhancing your card");
+                        playerCard.EnhanceAttribute(new Random().Next(0, playerCard.CurrentAttributes.Count), 7);
+
                         SaveState.Instance.SaveCard(playerCard);
                         Console.ReadLine();
                     }
@@ -426,6 +366,119 @@ namespace ProjectTrumps.Core
                     Round++;
                 }
             }
+        }
+
+        private DataCard SelectMode()
+        {
+            GameMode mode = GameMode.None;
+
+            Console.WriteLine("Choose Ladder starter:");
+            Console.WriteLine();
+            Console.WriteLine("1: Ladder Mode - New Game");
+            Console.WriteLine("2: Ladder Mode - Existing Heroes");
+            if (SaveState.Instance.AdditionalDeck.Any())
+            {
+
+                Console.WriteLine("3: Ladder Mode - Load Game");
+                Console.WriteLine("4: Champions Ladder Mode - Load Game");
+            }
+
+            var startInput = Console.ReadLine();
+            Console.WriteLine();
+
+            DataCard selectedCard1 = null;
+            DataCard selectedCard2 = null;
+
+            switch (startInput)
+            {
+                case "1":
+                    mode = GameMode.LadderModeNewGame;
+                    UsingHero = true;
+                    Console.WriteLine("Enter the name:");
+                    var nameInput = Console.ReadLine();
+
+                    if (string.IsNullOrEmpty(nameInput))
+                        nameInput = "Hero";
+
+                    Console.WriteLine();
+                    Console.WriteLine("Choose Type:");
+                    Console.WriteLine();
+                    Console.WriteLine("1: Red - Burn");
+                    Console.WriteLine("2: Blue - Evade/Parry");
+                    Console.WriteLine("3: Green - Heal");
+                    Console.WriteLine();
+
+                    var typeInput = Console.ReadLine();
+                    var typeInt = 1;
+                    switch (typeInput)
+                    {
+                        case "1":
+                            typeInt = 1;
+                            break;
+                        case "2":
+                            typeInt = 2;
+                            break;
+                        case "3":
+                            typeInt = 3;
+                            break;
+                        default:
+                            break;
+                    }
+
+                    selectedCard1 = CardFactory.Instance.GenerateCard(nameInput, Deck.FirstOrDefault().CurrentAttributes, (ColourType)typeInt);
+                    break;
+                case "2":
+                    mode = GameMode.LadderModeExistingHero;
+                    selectedCard1 = Deck[new Random().Next(0, Deck.Count)];
+                    break;
+                case "3":
+                    mode = GameMode.LadderModeLoadGame;
+                    if (SaveState.Instance.AdditionalDeck.Any())
+                    {
+                        selectedCard1 = SelectLSavedHero(out var loadedHero);
+                        UsingHero = loadedHero;
+                    }
+                    else
+                    {
+                        Console.WriteLine("No cards to load - selecting existing hero");
+                        selectedCard1 = Deck[new Random().Next(0, Deck.Count)];
+                    }
+                    break;
+                case "4":
+                    mode = GameMode.ChampionsLadder;
+                    if (SaveState.Instance.AdditionalDeck.Any())
+                    {
+                        selectedCard1 = SelectLSavedHero(out var loadedHero);
+                        UsingHero = loadedHero;
+                    }
+                    else
+                    {
+                        Console.WriteLine("No cards to load - selecting existing hero");
+                        selectedCard1 = Deck[new Random().Next(0, Deck.Count)];
+                    }
+                    GlobalDifficulty = Difficulty.Hard;
+                    break;
+                default:
+                    selectedCard1 = Deck[new Random().Next(0, Deck.Count)];
+                    break;
+            }
+
+            if (mode != GameMode.ChampionsLadder)
+            {
+                Console.WriteLine("Select Difficulty:");
+                Console.WriteLine();
+                Console.WriteLine("1: Easy");
+                Console.WriteLine("2: Normal");
+                Console.WriteLine("3: Hard");
+                Console.WriteLine("4: Very Hard");
+                GlobalDifficulty = SelectDifficulty();
+            }
+
+            if (mode == GameMode.LadderModeNewGame || mode == GameMode.LadderModeLoadGame || mode == GameMode.LadderModeExistingHero)
+                InitialiseArcadeOpponents(selectedCard1.Level);
+            else
+                InitialiseChampionsLadder();
+            return selectedCard1;
         }
 
         private static DataCard InitialiseCard(DataCard sCard1, int hp, int level)
@@ -437,6 +490,7 @@ namespace ProjectTrumps.Core
                 CurrentAttributes = CardFactory.Instance.CopyAttributes(sCard1.CurrentAttributes),
                 OriginalAttributes = CardFactory.Instance.CopyAttributes(sCard1.CurrentAttributes),
                 Type = sCard1.Type,
+                OriginalType = sCard1.Type,
                 Health = hp,
                 MaxHealth = hp,
                 Level = level,
@@ -445,7 +499,7 @@ namespace ProjectTrumps.Core
 
         private void InitialiseArcadeOpponents(int level)
         {
-            var startLevel = level - 1;
+            var startLevel = level;
             ArcadeOpponents = new Queue<DataCard>();
             var arcadeOpponentList = new List<DataCard>();
 
@@ -456,7 +510,7 @@ namespace ProjectTrumps.Core
                     var arcadeOpponentHp = 100 + (i * 15);
                     var arcadeOpponent = InitialiseCard(Deck[new Random().Next(0, Deck.Count)], arcadeOpponentHp, i + startLevel);
 
-                    for (int j = 1; j <= i + startLevel; j++)
+                    for (int j = 1; j <= i + startLevel - 1; j++)
                     {
                         arcadeOpponent.EnhanceAttribute(new Random().Next(0, arcadeOpponent.CurrentAttributes.Count), 2);
                     }
@@ -469,7 +523,7 @@ namespace ProjectTrumps.Core
                     var finalOpponentHp = 400;
                     var finalOpponent = InitialiseCard(Deck[new Random().Next(0, Deck.Count)], finalOpponentHp, i + startLevel);
 
-                    for (int j = 1; j <= i + startLevel; j++)
+                    for (int j = 1; j <= i + startLevel - 1; j++)
                     {
                         finalOpponent.EnhanceAttribute(new Random().Next(0, finalOpponent.CurrentAttributes.Count), 2);
                     }
@@ -481,6 +535,26 @@ namespace ProjectTrumps.Core
                     ArcadeOpponents.Enqueue(finalOpponent);
                 }
             }           
+        }
+
+        private void InitialiseChampionsLadder()
+        {
+            var level = 30;
+
+            ArcadeOpponents = new Queue<DataCard>();            
+
+            for (int i = 0; i < ChampionsLength; i++)
+            {
+                var arcadeOpponentHp = 400;
+                var arcadeOpponent = InitialiseCard(Deck[new Random().Next(0, Deck.Count)], arcadeOpponentHp, i + level);
+
+                for (int j = 1; j <= i + level - 1; j++)
+                {
+                    arcadeOpponent.EnhanceAttribute(new Random().Next(0, arcadeOpponent.CurrentAttributes.Count), 2);
+                }
+
+                ArcadeOpponents.Enqueue(arcadeOpponent);             
+            }
         }
 
         public void LoadSession(string path)
@@ -525,7 +599,7 @@ namespace ProjectTrumps.Core
             return selectedCard ?? deck[new Random().Next(0, deck.Count)];
         }
 
-        public void DisplayCardDetails(DataCard card1, int prevAttr, bool displayOnly = false)
+        public void DisplayCardDetails(DataCard card1, int prevAttr, bool displayOnly = false, DataCard card2 = null)
         {
             Console.WriteLine($"---- {card1.DisplayName} ({card1.Type.ToString()}) ----");
 
@@ -537,7 +611,13 @@ namespace ProjectTrumps.Core
                 }
                 else
                 {
-                    Console.WriteLine($"{(i + 1)} - {card1.CurrentAttributes[i].AttributeName} - {card1.CurrentAttributes[i].AttributeValue} - ({card1.CurrentAttributes[i].AttributeType})");
+                    var inspect = "";
+                    if (card2 != null)
+                    {
+                        inspect = $" <--->  ({card2.CurrentAttributes[i].AttributeType.ToString()})";
+                    }
+
+                    Console.WriteLine($"{(i + 1)} - {card1.CurrentAttributes[i].AttributeName} - {card1.CurrentAttributes[i].AttributeValue} - ({card1.CurrentAttributes[i].AttributeType}){inspect}");
                 }
             }
         }
@@ -571,9 +651,10 @@ namespace ProjectTrumps.Core
             return difficulty;
         }
 
-        public void PostGameSummary(DataCard card1, DataCard card2)
+        public void PostGameSummary(DataCard card1, DataCard card2, int round)
         {
             Console.WriteLine($"------------- POST MATCH SUMMARY -------------------");
+            Console.WriteLine($"------------- Round {round}");
             Console.WriteLine($"---- {card1.DisplayName} vs {card2.DisplayName} ----");
             var idx = 0;
             for (int i = 0; i < card1.CurrentAttributes.Count; i++)
@@ -616,5 +697,14 @@ namespace ProjectTrumps.Core
                 }
             }
         }
+    }
+
+    public enum GameMode
+    {
+        None = 0,
+        LadderModeNewGame = 1,
+        LadderModeExistingHero = 2,
+        LadderModeLoadGame = 3,
+        ChampionsLadder = 4,
     }
 }
