@@ -85,6 +85,9 @@ namespace ProjectTrumps.Core
 
             Type = OriginalType;
 
+            if (!StoredAttributes.Any())
+                return;
+
             CurrentAttributes.Clear();
             foreach (var newAttr in StoredAttributes)
             {
@@ -101,6 +104,12 @@ namespace ProjectTrumps.Core
         public void CopyStoredAttributesToCurrent()
         {
             Type = OriginalType;
+
+            if (!StoredAttributes.Any())
+            {
+                StoredAttributes = CardFactory.Instance.CopyAttributes(CurrentAttributes);
+                return;
+            }           
 
             CurrentAttributes.Clear();
             foreach (var newAttr in StoredAttributes)
@@ -218,14 +227,21 @@ namespace ProjectTrumps.Core
             EnhanceCountdown = 3;
         }
 
-        public void EvaluateEnhance()
+        public void EvaluateEnhance(bool playerTurn)
         {
+            if (!playerTurn)
+                return;
+
+            bool enhanceEnded = false;
             if (EnhanceCountdown > 0)
-            {
+            {                
                 EnhanceCountdown--;
+
+                if (EnhanceCountdown == 0)
+                    enhanceEnded = true;
             }
 
-            if (EnhanceCountdown == 0)
+            if (enhanceEnded)
             {
                 AffiliatedName = "";
                 RestoreStoredAttributes(false);
@@ -297,6 +313,14 @@ namespace ProjectTrumps.Core
             RemoveAt(0);
 
             return topCard;
+        }
+
+        public void AddCardsToDeck(List<DataCard> cards, int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                Add(cards[new Random().Next(0, cards.Count)]);
+            }
         }
 
         public void Shuffle()

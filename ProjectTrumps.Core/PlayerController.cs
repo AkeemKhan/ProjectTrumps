@@ -9,9 +9,9 @@ namespace ProjectTrumps.Core
     public class PlayerController
     {
         public DataCard MainCard { get => PlayerInventory.MainCard; set => PlayerInventory.MainCard = value; }
-        public PlayerInventory PlayerInventory { get; set; }
+        public PlayerInventory PlayerInventory { get; set; } = new PlayerInventory();
         public int PreviousAttribute { get; set; }
-        public PlayerActionParams PlayerActionParams { get; set; }
+        public PlayerActionParams PlayerActionParams { get; set; } = new PlayerActionParams();
 
         public void InitialiseActions()
         {
@@ -25,6 +25,11 @@ namespace ProjectTrumps.Core
                 ChangeCard= false,
                 ConductBattle = false,
             };
+        }
+
+        public void EvaluatePostTurn(bool playerTurn)
+        {
+            MainCard.EvaluateEnhance(playerTurn);
         }
     }
 
@@ -64,6 +69,8 @@ namespace ProjectTrumps.Core
         public bool ChangeCard { get; set; }        
         public bool Fuse { get; set; }
         public bool Tribute { get; set; }
+        public bool Heal { get; set; }
+        public bool Replenish { get; set; }
 
         public void InitialiseAtStartOfTurn()
         {
@@ -71,7 +78,9 @@ namespace ProjectTrumps.Core
             ConductBattle= false;
             ChangeCard = false;
             Fuse = false;
-            Tribute= false;
+            Tribute = false;
+            Heal = false;
+            Replenish = false;
         }
     }
 

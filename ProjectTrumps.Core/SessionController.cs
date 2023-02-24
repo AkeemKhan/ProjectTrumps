@@ -32,12 +32,15 @@ namespace ProjectTrumps.Core
 
             Round = 1;
             DataCard playerCard = null;
+            var playerController = new PlayerController();
 
             while (ArcadeOpponents.Count > 0)
             {
                 if (Round == 1)
                 {
                     playerCard = InitialiseCard(selectedCard1, selectedCard1.MaxHealth, selectedCard1.Level);
+                    playerController.MainCard = playerCard;
+                    playerController.PlayerInventory.Deck.AddCardsToDeck(Deck, 10);
                 }
 
                 var cpuController = ArcadeOpponents.Dequeue();
@@ -55,8 +58,6 @@ namespace ProjectTrumps.Core
                     Console.WriteLine($"----------- FINAL ROUND - {opponentCard.DisplayName} is the final enemy!");
                     Console.WriteLine($"------------------------------------------------------------");
                 }
-
-                var playerController = new PlayerController();
 
                 var matchController = new MatchController()
                 {
@@ -141,13 +142,14 @@ namespace ProjectTrumps.Core
                     blog.DisplayConsoleMessages();
 
                     Console.WriteLine("Press to continue");
+                    playerController.EvaluatePostTurn(playerTurn);
                     Console.ReadLine();
                 }
 
                 if (playerController.PlayerActionParams.Retreat)
                 {
                     Console.WriteLine("Saving card --- Ending run");
-                    DisplayCardDetails(playerCard, 0, true);
+                    DisplayCardDetails(playerCard, 0, playerController, true);
                     SaveState.Instance.SaveCard(playerCard);
                     break;
                 }
@@ -165,7 +167,7 @@ namespace ProjectTrumps.Core
 
                     playerCard.Level++;
                     Console.WriteLine();
-                    DisplayCardDetails(playerCard, 0, true);
+                    DisplayCardDetails(playerCard, 0, playerController, true);
 
                     if (UsingHero && playerCard.StoredAttributes.Any())
                     {                        
@@ -183,7 +185,7 @@ namespace ProjectTrumps.Core
                             playerCard.RestoreStoredAttributes();
                             Console.WriteLine();
                             Console.WriteLine("Restored Main card...");
-                            DisplayCardDetails(playerCard, 0, true);
+                            DisplayCardDetails(playerCard, 0, playerController, true);
                             Console.WriteLine();
                             Console.ReadLine();
                         }                        
@@ -268,7 +270,7 @@ namespace ProjectTrumps.Core
 
                         Console.ReadLine();
 
-                        DisplayCardDetails(playerCard, 0, true);
+                        DisplayCardDetails(playerCard, 0, playerController, true);
 
                         Console.WriteLine("Continue to next opponent...");
                         Console.ReadLine();
@@ -307,7 +309,20 @@ namespace ProjectTrumps.Core
 
             if (playerController.PlayerActionParams.Fuse)
             {
-                playerCard.FuseAttributes(playerController.PlayerInventory.Deck.DrawTopCard());
+                playerController.PlayerInventory.Fusion--;
+                playerCard.FuseAttributes(playerController.PlayerInventory.Deck.DrawTopCard());                
+            }
+
+            if (playerController.PlayerActionParams.Heal)
+            {
+                playerCard.FullHeal();
+                playerController.PlayerInventory.Heal--;
+            }
+
+            if (playerController.PlayerActionParams.Replenish)
+            {
+                playerCard.RestoreAttributes();
+                playerController.PlayerInventory.Replenish--;                
             }
 
             if (playerController.PlayerActionParams.Tribute)
@@ -318,6 +333,7 @@ namespace ProjectTrumps.Core
                     tributes.Add(playerController.PlayerInventory.Deck.DrawTopCard());
                 }
                 playerCard.EnhanceUsingTributes(tributes);
+                playerController.PlayerInventory.Tribute--;
             }
         }
 
@@ -326,7 +342,7 @@ namespace ProjectTrumps.Core
             Console.WriteLine("------------------------------- List of Attributes: -----------------------------------------------------------");
             Console.WriteLine();
 
-            DisplayCardDetails(playerCard, playerController.PreviousAttribute, false, playerController.PlayerActionParams.InsightType ? opponentCard : null);
+            DisplayCardDetails(playerCard, playerController.PreviousAttribute, playerController, false, playerController.PlayerActionParams.InsightType ? opponentCard : null);
 
             if (playerController.PreviousAttribute >= 0)
             {
@@ -360,6 +376,22 @@ namespace ProjectTrumps.Core
                     if (playerController.PlayerInventory.Deck.HasCards(5) && playerController.PlayerInventory.Tribute > 0)
                     {
                         playerController.PlayerActionParams.Tribute = true;
+                        hasSelected = true;
+                    }
+                }
+                else if (input.ToLower() == "h")
+                {
+                    if (playerController.PlayerInventory.Heal > 0)
+                    {
+                        playerController.PlayerActionParams.Heal = true;
+                        hasSelected = true;
+                    }
+                }
+                else if (input.ToLower() == "a")
+                {
+                    if (playerController.PlayerInventory.Replenish > 0)
+                    {
+                        playerController.PlayerActionParams.Replenish = true;
                         hasSelected = true;
                     }
                 }
@@ -659,7 +691,7 @@ namespace ProjectTrumps.Core
             return selectedCard ?? deck[new Random().Next(0, deck.Count)];
         }
 
-        public void DisplayCardDetails(DataCard card1, int prevAttr, bool displayOnly = false, DataCard card2 = null)
+        public void DisplayCardDetails(DataCard card1, int prevAttr, PlayerController player, bool displayOnly = false, DataCard card2 = null)
         {
             Console.WriteLine($"---- {card1.DisplayName} ({card1.Type.ToString()}) ----");
 
@@ -680,6 +712,15 @@ namespace ProjectTrumps.Core
                     Console.WriteLine($"{(i + 1)} - {card1.CurrentAttributes[i].AttributeName} - {card1.CurrentAttributes[i].AttributeValue} - ({card1.CurrentAttributes[i].AttributeType}){inspect}");
                 }
             }
+
+            Console.WriteLine("R - Retreat (Hero)");
+            Console.WriteLine($"F - Fuse with next card                 - {player.PlayerInventory.Fusion} remaining");
+            Console.WriteLine($"T - Enhance by tributing with next card - {player.PlayerInventory.Tribute} remaining");
+            Console.WriteLine($"H - Heal                                - {player.PlayerInventory.Heal} remaining");
+            Console.WriteLine($"A - Replenish Attributes                - {player.PlayerInventory.Replenish} remaining");
+            Console.WriteLine();
+            Console.WriteLine($"Cards remaining in player deck          - {player.PlayerInventory.Deck.Count}");
+            Console.WriteLine($"Enhanced turns remaining                - {player.MainCard.EnhanceCountdown}");
         }
 
         public Difficulty SelectDifficulty()
@@ -733,7 +774,7 @@ namespace ProjectTrumps.Core
 
         public bool PlayerChangeCard(PlayerController playerController, bool displayChangedStats)
         {
-            if (playerController.MainCard!= null)            
+            if (playerController.MainCard == null)            
                 return false;
             
 
