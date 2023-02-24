@@ -27,9 +27,9 @@ namespace ProjectTrumps.Core
             };
         }
 
-        public void EvaluatePostTurn(bool playerTurn)
+        public void EvaluatePostTurn(bool playerTurn, DataCard playerCard, DataCard opponentCard)
         {
-            MainCard.EvaluateEnhance(playerTurn);
+            MainCard.EvaluateEnhance(playerTurn, opponentCard.Health <= 0);
         }
     }
 

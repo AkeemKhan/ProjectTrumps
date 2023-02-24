@@ -227,12 +227,19 @@ namespace ProjectTrumps.Core
             EnhanceCountdown = 3;
         }
 
-        public void EvaluateEnhance(bool playerTurn)
+        public void EvaluateEnhance(bool playerTurn, bool opponentDefeated)
         {
+            bool enhanceEnded = false;
+
+            if (opponentDefeated)
+            {
+                EnhanceCountdown = 0;
+                enhanceEnded = true;
+            }
+
             if (!playerTurn)
                 return;
 
-            bool enhanceEnded = false;
             if (EnhanceCountdown > 0)
             {                
                 EnhanceCountdown--;

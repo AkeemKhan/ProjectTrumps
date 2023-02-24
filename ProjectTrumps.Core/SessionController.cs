@@ -142,7 +142,7 @@ namespace ProjectTrumps.Core
                     blog.DisplayConsoleMessages();
 
                     Console.WriteLine("Press to continue");
-                    playerController.EvaluatePostTurn(playerTurn);
+                    playerController.EvaluatePostTurn(playerTurn  playerCard, opponentCard);
                     Console.ReadLine();
                 }
 
@@ -153,6 +153,8 @@ namespace ProjectTrumps.Core
                     SaveState.Instance.SaveCard(playerCard);
                     break;
                 }
+
+                playerCard.EnhanceCountdown = 0;
 
                 PostGameSummary(playerCard, opponentCard, Round);
 
@@ -713,6 +715,7 @@ namespace ProjectTrumps.Core
                 }
             }
 
+            Console.WriteLine();
             Console.WriteLine("R - Retreat (Hero)");
             Console.WriteLine($"F - Fuse with next card                 - {player.PlayerInventory.Fusion} remaining");
             Console.WriteLine($"T - Enhance by tributing with next card - {player.PlayerInventory.Tribute} remaining");
@@ -720,7 +723,9 @@ namespace ProjectTrumps.Core
             Console.WriteLine($"A - Replenish Attributes                - {player.PlayerInventory.Replenish} remaining");
             Console.WriteLine();
             Console.WriteLine($"Cards remaining in player deck          - {player.PlayerInventory.Deck.Count}");
-            Console.WriteLine($"Enhanced turns remaining                - {player.MainCard.EnhanceCountdown}");
+
+            if (player.MainCard.EnhanceCountdown > 0)
+                Console.WriteLine($"Enhanced turns remaining                - {player.MainCard.EnhanceCountdown}");
         }
 
         public Difficulty SelectDifficulty()
