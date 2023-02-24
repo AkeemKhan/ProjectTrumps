@@ -15,7 +15,7 @@ namespace ProjectTrumps.Core
 
         public int ArcadeLength { get; set; } = 8;
         public int ChampionsLength { get; set; } = 5;
-        public Queue<DataCard> ArcadeOpponents { get; set; }
+        public Queue<CPUController> ArcadeOpponents { get; set; }
         public int Round { get; set; }
 
         public int LoadedSessionDifficultyModifier { get; set; } = 0;
@@ -40,7 +40,8 @@ namespace ProjectTrumps.Core
                     playerCard = InitialiseCard(selectedCard1, selectedCard1.MaxHealth, selectedCard1.Level);
                 }
 
-                var opponentCard = ArcadeOpponents.Dequeue();
+                var cpuController = ArcadeOpponents.Dequeue();
+                var opponentCard = cpuController.CPUCard;
 
                 if (Round < maxOpponents)
                 {
@@ -64,14 +65,7 @@ namespace ProjectTrumps.Core
                     Inspect = false
                 };
 
-                var cpuController = new CPUController()
-                {
-                    MoraleDropDamageThreshold = 20,
-                    ChangeCard = false,
-                    ChangeAtNTimesDamageTaken = 10,
-                    DamageTakenCounter = 0,
-                    DifficultyLevel = GlobalDifficulty
-                };
+                playerController.PlayerActionParams.InitialiseAtStartOfTurn();
 
                 var playerTurn = true;
 
@@ -87,8 +81,6 @@ namespace ProjectTrumps.Core
 
                 while (playerCard.Health > 0 && opponentCard.Health > 0)
                 {                   
-
-                    Console.WriteLine();
                     Console.WriteLine();
 
                     var aiHealthBefore = opponentCard.Health;
@@ -113,7 +105,7 @@ namespace ProjectTrumps.Core
                         if (cpuController.ChangeCard)
                         {
                             Console.WriteLine("CPU Changed card - Press to continue");
-                            ChangeCard(Deck, opponentCard, false);
+                            CPUChangeCard(Deck, opponentCard, false);
                             cpuController.ChangeCard = false;
                             matchController.Inspect = false;
                             Console.ReadLine();
@@ -188,7 +180,7 @@ namespace ProjectTrumps.Core
                         var resInput = Console.ReadLine();
                         if (resInput == "1")
                         {
-                            playerCard.RestoreMainAttributes();
+                            playerCard.RestoreStoredAttributes();
                             Console.WriteLine();
                             Console.WriteLine("Restored Main card...");
                             DisplayCardDetails(playerCard, 0, true);
@@ -310,7 +302,22 @@ namespace ProjectTrumps.Core
 
             if (playerController.PlayerActionParams.ChangeCard)
             {
-                ChangeCard(Deck, playerCard);
+                PlayerChangeCard(playerController, true);
+            }
+
+            if (playerController.PlayerActionParams.Fuse)
+            {
+                playerCard.FuseAttributes(playerController.PlayerInventory.Deck.DrawTopCard());
+            }
+
+            if (playerController.PlayerActionParams.Tribute)
+            {
+                var tributes = new List<DataCard>();
+                for (int i = 0; i < 5; i++)
+                {
+                    tributes.Add(playerController.PlayerInventory.Deck.DrawTopCard());
+                }
+                playerCard.EnhanceUsingTributes(tributes);
             }
         }
 
@@ -319,7 +326,7 @@ namespace ProjectTrumps.Core
             Console.WriteLine("------------------------------- List of Attributes: -----------------------------------------------------------");
             Console.WriteLine();
 
-            DisplayCardDetails(playerCard, playerController.PreviousAttribute, false, matchController.Inspect ? opponentCard : null);
+            DisplayCardDetails(playerCard, playerController.PreviousAttribute, false, playerController.PlayerActionParams.InsightType ? opponentCard : null);
 
             if (playerController.PreviousAttribute >= 0)
             {
@@ -340,9 +347,25 @@ namespace ProjectTrumps.Core
                     playerController.PlayerActionParams.ConductBattle = false;
                     hasSelected = true;
                 }
+                else if (input.ToLower() == "f")
+                {
+                    if (playerController.PlayerInventory.Deck.HasCards(1) && playerController.PlayerInventory.Fusion > 0)
+                    {
+                        playerController.PlayerActionParams.Fuse = true;
+                        hasSelected = true;
+                    }
+                }
+                else if (input.ToLower() == "t")
+                {
+                    if (playerController.PlayerInventory.Deck.HasCards(5) && playerController.PlayerInventory.Tribute > 0)
+                    {
+                        playerController.PlayerActionParams.Tribute = true;
+                        hasSelected = true;
+                    }
+                }
                 else if (input.ToLower() == "i")
                 {
-                    matchController.Inspect = true;
+                    playerController.PlayerActionParams.InsightType = true;                    
                     playerController.PlayerActionParams.ConductBattle = false;
                     hasSelected = true;
                 }
@@ -507,7 +530,7 @@ namespace ProjectTrumps.Core
         private void InitialiseArcadeOpponents(int level)
         {
             var startLevel = level;
-            ArcadeOpponents = new Queue<DataCard>();
+            ArcadeOpponents = new Queue<CPUController>();
             var arcadeOpponentList = new List<DataCard>();
 
             for (int i = 0; i < ArcadeLength; i++)
@@ -515,12 +538,22 @@ namespace ProjectTrumps.Core
                 if (i != ArcadeLength- 1)
                 {
                     var arcadeOpponentHp = 100 + (i * 15);
-                    var arcadeOpponent = InitialiseCard(Deck[new Random().Next(0, Deck.Count)], arcadeOpponentHp, i + startLevel);
+                    var arcadeOpponentCard = InitialiseCard(Deck[new Random().Next(0, Deck.Count)], arcadeOpponentHp, i + startLevel);
 
                     for (int j = 1; j <= i + startLevel - 1; j++)
                     {
-                        arcadeOpponent.EnhanceAttribute(new Random().Next(0, arcadeOpponent.CurrentAttributes.Count), 2);
+                        arcadeOpponentCard.EnhanceAttribute(new Random().Next(0, arcadeOpponentCard.CurrentAttributes.Count), 2);
                     }
+
+                    var arcadeOpponent = new CPUController()
+                    {
+                        CPUCard = arcadeOpponentCard,
+                        MoraleDropDamageThreshold = 20,
+                        ChangeCard = false,
+                        ChangeAtNTimesDamageTaken = 10,
+                        DamageTakenCounter = 0,
+                        DifficultyLevel = GlobalDifficulty
+                    };
 
                     ArcadeOpponents.Enqueue(arcadeOpponent);
                 }
@@ -528,17 +561,27 @@ namespace ProjectTrumps.Core
                 else
                 {
                     var finalOpponentHp = 400;
-                    var finalOpponent = InitialiseCard(Deck[new Random().Next(0, Deck.Count)], finalOpponentHp, i + startLevel);
+                    var finalOpponentCard = InitialiseCard(Deck[new Random().Next(0, Deck.Count)], finalOpponentHp, i + startLevel);
 
                     for (int j = 1; j <= i + startLevel - 1; j++)
                     {
-                        finalOpponent.EnhanceAttribute(new Random().Next(0, finalOpponent.CurrentAttributes.Count), 2);
+                        finalOpponentCard.EnhanceAttribute(new Random().Next(0, finalOpponentCard.CurrentAttributes.Count), 2);
                     }
 
-                    finalOpponent.EnhanceAttribute(new Random().Next(0, finalOpponent.CurrentAttributes.Count), 5);
-                    finalOpponent.EnhanceAttribute(new Random().Next(0, finalOpponent.CurrentAttributes.Count), 5);
-                    finalOpponent.EnhanceAttribute(new Random().Next(0, finalOpponent.CurrentAttributes.Count), 5);
-                    
+                    finalOpponentCard.EnhanceAttribute(new Random().Next(0, finalOpponentCard.CurrentAttributes.Count), 5);
+                    finalOpponentCard.EnhanceAttribute(new Random().Next(0, finalOpponentCard.CurrentAttributes.Count), 5);
+                    finalOpponentCard.EnhanceAttribute(new Random().Next(0, finalOpponentCard.CurrentAttributes.Count), 5);
+
+                    var finalOpponent = new CPUController(400)
+                    {
+                        CPUCard = finalOpponentCard,
+                        MoraleDropDamageThreshold = 20,
+                        ChangeCard = false,
+                        ChangeAtNTimesDamageTaken = 100,
+                        DamageTakenCounter = 0,
+                        DifficultyLevel = GlobalDifficulty
+                    };
+
                     ArcadeOpponents.Enqueue(finalOpponent);
                 }
             }           
@@ -548,19 +591,29 @@ namespace ProjectTrumps.Core
         {
             var level = 30;
 
-            ArcadeOpponents = new Queue<DataCard>();            
+            ArcadeOpponents = new Queue<CPUController>();            
 
             for (int i = 0; i < ChampionsLength; i++)
             {
                 var arcadeOpponentHp = 400;
-                var arcadeOpponent = InitialiseCard(Deck[new Random().Next(0, Deck.Count)], arcadeOpponentHp, i + level);
+                var arcadeOpponentCard = InitialiseCard(Deck[new Random().Next(0, Deck.Count)], arcadeOpponentHp, i + level);
 
                 for (int j = 1; j <= i + level - 1; j++)
                 {
-                    arcadeOpponent.EnhanceAttribute(new Random().Next(0, arcadeOpponent.CurrentAttributes.Count), 2);
+                    arcadeOpponentCard.EnhanceAttribute(new Random().Next(0, arcadeOpponentCard.CurrentAttributes.Count), 2);
                 }
 
-                ArcadeOpponents.Enqueue(arcadeOpponent);             
+                var arcadeOpponent = new CPUController(400)
+                {
+                    CPUCard = arcadeOpponentCard,
+                    MoraleDropDamageThreshold = 20,
+                    ChangeCard = false,
+                    ChangeAtNTimesDamageTaken = 100,
+                    DamageTakenCounter = 0,
+                    DifficultyLevel = GlobalDifficulty
+                };
+
+                ArcadeOpponents.Enqueue(arcadeOpponent);
             }
         }
 
@@ -678,7 +731,46 @@ namespace ProjectTrumps.Core
             Console.WriteLine();
         }
 
-        public void ChangeCard(List<DataCard> deck, DataCard card, bool displayChangedStats = true)
+        public bool PlayerChangeCard(PlayerController playerController, bool displayChangedStats)
+        {
+            if (playerController.MainCard!= null)            
+                return false;
+            
+
+            if (!playerController.PlayerInventory.Deck.HasCards(1))
+            {
+                Console.WriteLine("No Cards available... ");
+                return false;
+            }
+
+            if (!playerController.MainCard.StoredAttributes.Any())
+            {
+                playerController.MainCard.StoredAttributes = CardFactory.Instance.CopyAttributes(playerController.MainCard.CurrentAttributes);
+            }
+
+            var newCard = playerController.PlayerInventory.Deck.DrawTopCard();
+            playerController.MainCard.Health += 15;
+            playerController.MainCard.ReplaceAttributes(newCard);
+            playerController.MainCard.Type = newCard.Type;
+
+            if (displayChangedStats)
+            {
+                Console.WriteLine("Changed card: ");
+                Console.WriteLine();
+                Console.WriteLine("List of Attributes:");
+                Console.WriteLine();
+                Console.WriteLine($"---- {playerController.MainCard.DisplayName} ----");
+
+                for (int i = 0; i < playerController.MainCard.CurrentAttributes.Count; i++)
+                {
+                    Console.WriteLine($"{(i + 1)} - {playerController.MainCard.CurrentAttributes[i].AttributeName} - {playerController.MainCard.CurrentAttributes[i].AttributeValue} - ({playerController.MainCard.CurrentAttributes[i].AttributeType})");
+                }
+            }
+
+            return true;
+        }
+
+        public void CPUChangeCard(List<DataCard> deck, DataCard card, bool displayChangedStats = true)
         {
             if (!card.StoredAttributes.Any())
             {

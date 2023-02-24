@@ -13,6 +13,13 @@ namespace ProjectTrumps.Core
             Morale = new CPUMoralaController(this, 100);
         }
 
+        public CPUController(int morale)
+        {
+            Morale = new CPUMoralaController(this, morale);
+        }
+
+        public DataCard CPUCard { get; set; }
+
         public List<int> Commands { get; set; }
         public CPUMoralaController Morale { get; set; }
         public int MoraleDropDamageThreshold { get; set; }

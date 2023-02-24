@@ -13,8 +13,8 @@ namespace ProjectTrumps.Core
         public DataCard CreateCard(string[] args)
         {
             var card = new DataCard();
-            TrumpsAttribute temp = null;
-            TrumpsAttribute origTemp = null;
+            DataCardAttributes temp = null;
+            DataCardAttributes origTemp = null;
 
             // TODO: Validate string args
 
@@ -52,8 +52,8 @@ namespace ProjectTrumps.Core
                 switch (paramType)
                 {
                     case 0:
-                        temp = new TrumpsAttribute();
-                        origTemp = new TrumpsAttribute();
+                        temp = new DataCardAttributes();
+                        origTemp = new DataCardAttributes();
 
                         temp.AttributeName = args[i];
                         origTemp.AttributeName = args[i];
@@ -78,7 +78,7 @@ namespace ProjectTrumps.Core
             return card;
         }
 
-        public DataCard GenerateCard(string name, IList<TrumpsAttribute> attributes, ColourType type) 
+        public DataCard GenerateCard(string name, IList<DataCardAttributes> attributes, ColourType type) 
         {
             var card = new DataCard();
 
@@ -100,11 +100,11 @@ namespace ProjectTrumps.Core
             return card;
         }
 
-        public IList<TrumpsAttribute> CopyAttributes(IList<TrumpsAttribute> attributes) 
+        public IList<DataCardAttributes> CopyAttributes(IList<DataCardAttributes> attributes) 
         { 
-            var list = new List<TrumpsAttribute>();
+            var list = new List<DataCardAttributes>();
             foreach (var attr in attributes)
-                list.Add(new TrumpsAttribute 
+                list.Add(new DataCardAttributes 
                 { 
                     AttributeName = attr.AttributeName, 
                     AttributeValue = attr.AttributeValue, 

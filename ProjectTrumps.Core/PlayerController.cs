@@ -6,8 +6,10 @@ using System.Threading.Tasks;
 
 namespace ProjectTrumps.Core
 {
-    internal class PlayerController
+    public class PlayerController
     {
+        public DataCard MainCard { get => PlayerInventory.MainCard; set => PlayerInventory.MainCard = value; }
+        public PlayerInventory PlayerInventory { get; set; }
         public int PreviousAttribute { get; set; }
         public PlayerActionParams PlayerActionParams { get; set; }
 
@@ -26,12 +28,64 @@ namespace ProjectTrumps.Core
         }
     }
 
+    public class PlayerInventory : IInventory
+    {
+        public PlayerInventory()
+        {
+            InsightType = 1;
+            InsightStats = 1;
+            Fusion = 1;
+            Tribute = 1;
+            Heal = 1;
+            Replenish= 1;
+        }
+
+        public DataCard MainCard { get; set;}
+        public DataDeck Deck { get; set; } = new DataDeck();
+
+
+        public int InsightType { get; set; }
+        public int InsightStats { get; set; }        
+        public int Fusion { get; set; }
+        public int Tribute { get; set; }
+        public int Heal { get; set; }
+        public int Replenish { get; set; }
+    }
+
     public class PlayerActionParams
     {
         public int PreviousAttribute { get; set; }
         public int SelectedAttribute { get; set; }
+
+        public bool InsightStats { get; set; }
+        public bool InsightType { get; set; }
         public bool Retreat { get; set; }
         public bool ConductBattle { get; set; }
-        public bool ChangeCard { get; set; }
+        public bool ChangeCard { get; set; }        
+        public bool Fuse { get; set; }
+        public bool Tribute { get; set; }
+
+        public void InitialiseAtStartOfTurn()
+        {
+            Retreat = false;
+            ConductBattle= false;
+            ChangeCard = false;
+            Fuse = false;
+            Tribute= false;
+        }
+    }
+
+    public enum TurnAction
+    {
+        ConductBattle,
+        ChangeCard,
+        Retreat,
+        Fuse,
+        Tribute
+    }
+
+    public interface IInventory
+    {
+        DataDeck Deck { get; set; }
     }
 }

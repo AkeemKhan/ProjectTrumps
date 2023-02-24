@@ -9,7 +9,8 @@ namespace ProjectTrumps.Core
     public class DataCard : IDataCard
     {
         public string Id { get; set; }
-        public int Level { get; set; } = 1;    
+        public int Level { get; set; } = 1;
+        public int EnhanceCountdown { get; set; }
 
         public string DisplayName 
         { 
@@ -23,7 +24,15 @@ namespace ProjectTrumps.Core
         }
 
         public string OriginalName { get; set; }
-        public string AffiliatedName { get; set; }
+
+        private string _affilatedName;
+        public string AffiliatedName 
+        {
+            get => IsEnhanced ? "ENHANCED" : _affilatedName;
+            set => _affilatedName = value; 
+        }
+
+        public bool IsEnhanced { get; set; } = false;
 
         public float CurrentPowerRating => (CurrentAttributes.Sum(p => p.AttributeValue) / CurrentAttributes.Count) + (CurrentAttributes.Count(p => p.AttributeValue > 9));
         public float OriginalPowerRating => (OriginalAttributes.Sum(p => p.AttributeValue) / CurrentAttributes.Count) + (CurrentAttributes.Count(p => p.AttributeValue > 9));
@@ -32,9 +41,20 @@ namespace ProjectTrumps.Core
         public ColourType OriginalType { get; set; }
 
 
-        public IList<TrumpsAttribute> CurrentAttributes { get; set; } = new List<TrumpsAttribute>();
-        public IList<TrumpsAttribute> OriginalAttributes { get; set; } = new List<TrumpsAttribute>();
-        public IList<TrumpsAttribute> StoredAttributes { get; set; } = new List<TrumpsAttribute>();
+        /// <summary>
+        /// Attributes Currently in use
+        /// </summary>
+        public IList<DataCardAttributes> CurrentAttributes { get; set; } = new List<DataCardAttributes>();
+
+        /// <summary>
+        /// Original Card values
+        /// </summary>
+        public IList<DataCardAttributes> OriginalAttributes { get; set; } = new List<DataCardAttributes>();
+
+        /// <summary>
+        /// Attributes of Main card pre change
+        /// </summary>
+        public IList<DataCardAttributes> StoredAttributes { get; set; } = new List<DataCardAttributes>();       
 
         public bool HasSwapped => StoredAttributes.Any();
 
@@ -48,7 +68,7 @@ namespace ProjectTrumps.Core
             CurrentAttributes.Clear();
             foreach (var newAttr in newCard.CurrentAttributes)
             {
-                CurrentAttributes.Add(new TrumpsAttribute
+                CurrentAttributes.Add(new DataCardAttributes
                 {
                     AttributeName = newAttr.AttributeName,
                     AttributeType = newAttr.AttributeType,
@@ -56,7 +76,7 @@ namespace ProjectTrumps.Core
                 });
             }
         }
-        public void RestoreMainAttributes(bool restoreHealth = true)
+        public void RestoreStoredAttributes(bool restoreHealth = true)
         {
             AffiliatedName = "";
 
@@ -68,7 +88,7 @@ namespace ProjectTrumps.Core
             CurrentAttributes.Clear();
             foreach (var newAttr in StoredAttributes)
             {
-                CurrentAttributes.Add(new TrumpsAttribute
+                CurrentAttributes.Add(new DataCardAttributes
                 {
                     AttributeName = newAttr.AttributeName,
                     AttributeType = newAttr.AttributeType,
@@ -76,6 +96,22 @@ namespace ProjectTrumps.Core
                 });
             }
             StoredAttributes.Clear();
+        }
+
+        public void CopyStoredAttributesToCurrent()
+        {
+            Type = OriginalType;
+
+            CurrentAttributes.Clear();
+            foreach (var newAttr in StoredAttributes)
+            {
+                CurrentAttributes.Add(new DataCardAttributes
+                {
+                    AttributeName = newAttr.AttributeName,
+                    AttributeType = newAttr.AttributeType,
+                    AttributeValue = newAttr.AttributeValue,
+                });
+            }            
         }
 
         public void RestoreAttributes(bool restoreHealth = true)
@@ -88,7 +124,7 @@ namespace ProjectTrumps.Core
             CurrentAttributes.Clear();
             foreach (var newAttr in OriginalAttributes)
             {
-                CurrentAttributes.Add(new TrumpsAttribute
+                CurrentAttributes.Add(new DataCardAttributes
                 {
                     AttributeName = newAttr.AttributeName,
                     AttributeType = newAttr.AttributeType,
@@ -154,6 +190,48 @@ namespace ProjectTrumps.Core
             EnhanceAllAttributes(attrValue);
         }
 
+        public void FuseAttributes(DataCard fuseCard)
+        {
+            RestoreStoredAttributes(false);
+            var newHp = (fuseCard.MaxHealth + Health) / 2;
+            Health = Health < newHp ? newHp : Health;
+
+            for (int i = 0; i < CurrentAttributes.Count; i++)
+            {
+                var attrValue = (CurrentAttributes[i].AttributeValue + fuseCard.OriginalAttributes[i].AttributeValue) / 2;
+                CurrentAttributes[i].AttributeValue = attrValue;
+            }
+        }
+
+        public void EnhanceUsingTributes(List<DataCard> tributes)
+        {
+            CopyStoredAttributesToCurrent();
+
+            AffiliatedName = "ENHANCED";
+
+            for (int i = 0; i < CurrentAttributes.Count; i++)
+            {
+                var enhancementValue = tributes.Sum(p => p.CurrentAttributes[i].AttributeValue) / tributes.Count;
+                CurrentAttributes[i].AttributeValue += enhancementValue;
+            }
+
+            EnhanceCountdown = 3;
+        }
+
+        public void EvaluateEnhance()
+        {
+            if (EnhanceCountdown > 0)
+            {
+                EnhanceCountdown--;
+            }
+
+            if (EnhanceCountdown == 0)
+            {
+                AffiliatedName = "";
+                RestoreStoredAttributes(false);
+            }
+        }
+
         public override string ToString()
         {
             var sb = new StringBuilder();
@@ -180,7 +258,7 @@ namespace ProjectTrumps.Core
     {        
         string OriginalName { get; set; }
         ColourType Type { get; set; }
-        IList<TrumpsAttribute> CurrentAttributes { get; set; }
+        IList<DataCardAttributes> CurrentAttributes { get; set; }
     }
 
     public enum ColourType
@@ -191,7 +269,7 @@ namespace ProjectTrumps.Core
         Green = 3,
     }
 
-    public class TrumpsAttribute
+    public class DataCardAttributes
     {        
         public string AttributeName { get; set; }        
         public int AttributeValue { get; set; }
@@ -200,6 +278,45 @@ namespace ProjectTrumps.Core
         public override string ToString()
         {
             return $"{AttributeName},{AttributeValue},{AttributeType.ToString()},";
+        }
+    }
+
+    public class DataDeck : List<DataCard>
+    {
+        public bool HasCards(int count)
+        {
+            return Count >= count;
+        }
+
+        public DataCard DrawTopCard()
+        {
+            if (Count <= 0)
+                return null;
+                
+            var topCard = this[0];
+            RemoveAt(0);
+
+            return topCard;
+        }
+
+        public void Shuffle()
+        {
+            if (Count <= 1)            
+                return;            
+
+            for (int i = 0; i < Count; i++)
+            {
+                var card = this[i];
+
+                var random = new Random().Next(0, this.Count);
+                
+                while(i != random)
+                {
+                    var tmp = this[random];
+                    this[random] = card;
+                    this[i] = tmp;
+                }                
+            }
         }
     }
 }
