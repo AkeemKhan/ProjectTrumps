@@ -25,18 +25,18 @@ namespace ProjectTrumps.Core
             {
                 // TODO: Validate cluster
 
-                id = saveCluster[0];
+                card.Id = saveCluster[0];
                 card.MaxHealth = int.Parse(saveCluster[1]);
                 card.Health = int.Parse(saveCluster[1]);
                 card.Level = int.Parse(saveCluster[2]);
             }
             else
             {
+                card.Id = Guid.NewGuid().ToString();
                 card.MaxHealth = 100;
-                card.Health = 100;                
+                card.Health = 100;
             }
 
-            card.Id = args[0] == "Name" ? Guid.NewGuid().ToString() : args[0];
             card.OriginalName = args[1];
             card.AffiliatedName = args[1];
             card.OriginalType = ConvertToTrumpsType(args[2]);

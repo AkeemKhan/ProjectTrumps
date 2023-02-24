@@ -55,6 +55,8 @@ namespace ProjectTrumps.Core
                     Console.WriteLine($"------------------------------------------------------------");
                 }
 
+                var playerController = new PlayerController();
+
                 var matchController = new MatchController()
                 {
                     DamageLimitPerLevel = 10,
@@ -64,16 +66,14 @@ namespace ProjectTrumps.Core
 
                 var cpuController = new CPUController()
                 {
-                    DamageThreshold = 20,
+                    MoraleDropDamageThreshold = 20,
                     ChangeCard = false,
                     ChangeAtNTimesDamageTaken = 10,
                     DamageTakenCounter = 0,
                     DifficultyLevel = GlobalDifficulty
                 };
 
-                bool retreat = false;
                 var playerTurn = true;
-                var prevAttr = -1;
 
                 cpuController.RefreshCommands(playerCard, opponentCard);
 
@@ -86,8 +86,7 @@ namespace ProjectTrumps.Core
                 Console.WriteLine($"{opponentCard.DisplayName} power: {c2Average}");
 
                 while (playerCard.Health > 0 && opponentCard.Health > 0)
-                {
-                    var playerTurnAtStart = playerTurn;
+                {                   
 
                     Console.WriteLine();
                     Console.WriteLine();
@@ -96,87 +95,14 @@ namespace ProjectTrumps.Core
 
                     if (playerTurn)
                     {
-                        Console.WriteLine("------------------------------- List of Attributes: -----------------------------------------------------------");
-                        Console.WriteLine();
+                        playerController.InitialiseActions();
 
-                        DisplayCardDetails(playerCard, prevAttr, false, matchController.Inspect ? opponentCard : null);
-
-                        if (prevAttr >= 0)
-                        {
-                            Console.WriteLine($"Previous used: {playerCard.CurrentAttributes[prevAttr].AttributeName}");
-                        }
-
-                        Console.WriteLine();
-
-                        var hasSelected = false;
-                        var selectedAttribute = 0;
-                        var conductBattle = false;
-                        var changeCard = false;
-
-                        while (!hasSelected)
-                        {
-                            Console.WriteLine("Enter a valid value - cannot use prev:");
-                            var input = Console.ReadLine();
-
-                            if (input.ToLower() == "c")
-                            {
-                                changeCard = true;
-                                conductBattle = false;
-                                hasSelected = true;
-                            }
-                            else if (input.ToLower() == "i")
-                            {
-                                matchController.Inspect = true;
-                                conductBattle = false;
-                                hasSelected = true;
-                            }
-                            else if (input.ToLower() == "r")
-                            {
-                                if (UsingHero)
-                                    retreat = true;
-                            }
-                            else if (int.TryParse(input, out var res))
-                            {
-                                res--;
-
-                                if (prevAttr == res)
-                                    continue;
-
-
-                                if (res < playerCard.CurrentAttributes.Count)
-                                {
-                                    hasSelected = true;
-                                    prevAttr = res;
-                                }
-
-                                selectedAttribute = res;
-                                changeCard = false;
-                                conductBattle = true;
-                            }
-
-                            if (retreat)
-                                break;
-                        }
-
-
-                        if (conductBattle)
-                        {
-                            Console.WriteLine("******************************************************************");
-                            SoloBattleLogic.EvaluateBattle(playerCard, opponentCard, selectedAttribute, matchController.DamageLimitPerLevel, out var log);
-                            SoloBattleLogic.ModifyAttribute(playerCard, selectedAttribute, matchController.UseCost);
-                            log.DisplayConsoleMessages();
-
-                            cpuController.RefreshCommands(playerCard, opponentCard);
-                        }
-
-                        if (changeCard)
-                        {
-                            ChangeCard(Deck, playerCard);
-                        }
+                        SelectAction(playerCard, opponentCard, matchController, playerController);
+                        ImplementAction(playerCard, opponentCard, matchController, cpuController, playerController);
 
                         playerTurn = false;
 
-                        if (retreat)
+                        if (playerController.PlayerActionParams.Retreat)
                             break;
                     }
                     else
@@ -204,7 +130,7 @@ namespace ProjectTrumps.Core
                         playerTurn = true;
                     }
 
-                    if (retreat)
+                    if (playerController.PlayerActionParams.Retreat)
                         break;
 
                     var aiHealthAfter = opponentCard.Health;
@@ -226,7 +152,7 @@ namespace ProjectTrumps.Core
                     Console.ReadLine();
                 }
 
-                if (retreat)
+                if (playerController.PlayerActionParams.Retreat)
                 {
                     Console.WriteLine("Saving card --- Ending run");
                     DisplayCardDetails(playerCard, 0, true);
@@ -238,17 +164,19 @@ namespace ProjectTrumps.Core
 
                 if (playerCard.Health <= 0)
                 {
-                    Console.WriteLine($"{playerCard.DisplayName} Defeat");
+                    Console.WriteLine($"{playerCard.DisplayName} Defeated");
                     break;
                 }
                 else
                 {
+                    Console.WriteLine($"{opponentCard.DisplayName} Defeated");
+
                     playerCard.Level++;
                     Console.WriteLine();
                     DisplayCardDetails(playerCard, 0, true);
 
-                    if (UsingHero && playerCard.MainAttributes.Any())
-                    {
+                    if (UsingHero && playerCard.StoredAttributes.Any())
+                    {                        
                         Console.WriteLine();
                         Console.WriteLine("Restore main card?");
                         Console.WriteLine();
@@ -266,23 +194,23 @@ namespace ProjectTrumps.Core
                             DisplayCardDetails(playerCard, 0, true);
                             Console.WriteLine();
                             Console.ReadLine();
-                        }
+                        }                        
                     }
-
-                    Console.WriteLine("Select Reward:");
-                    Console.WriteLine();
-                    Console.WriteLine("1: Enhance Health");
-                    Console.WriteLine("2: Replenish Attributes (Heroes also slighly improve attributes)");
-                    Console.WriteLine("3: Enhance All Attributes");
-                    Console.WriteLine("4: Greatly Enhance Single Random Attributes");
-                    Console.WriteLine("5: Specialise Types - (Restore attributes)");
-                    Console.WriteLine("6: Specialise Types - (Keep attributes and Enhance a random attribute)");
-                    Console.WriteLine("7: All Minor Enhance");
-
-                    Console.WriteLine();
 
                     if (ArcadeOpponents.Any())
                     {
+                        Console.WriteLine("Select Reward:");
+                        Console.WriteLine();
+                        Console.WriteLine("1: Enhance Health");
+                        Console.WriteLine("2: Replenish Attributes (Heroes also slighly improve attributes)");
+                        Console.WriteLine("3: Enhance All Attributes");
+                        Console.WriteLine("4: Greatly Enhance Single Random Attributes");
+                        Console.WriteLine("5: Specialise Types - (Restore attributes)");
+                        Console.WriteLine("6: Specialise Types - (Keep attributes and Enhance a random attribute)");
+                        Console.WriteLine("7: All Minor Enhance");
+
+                        Console.WriteLine();
+
                         var input = Console.ReadLine();
                         var heroUpgrade = 0;
                         switch (input)
@@ -365,6 +293,85 @@ namespace ProjectTrumps.Core
 
                     Round++;
                 }
+            }
+        }
+
+        private void ImplementAction(DataCard playerCard, DataCard opponentCard, MatchController matchController, CPUController cpuController, PlayerController playerController)
+        {
+            if (playerController.PlayerActionParams.ConductBattle)
+            {
+                Console.WriteLine("******************************************************************");
+                SoloBattleLogic.EvaluateBattle(playerCard, opponentCard, playerController.PlayerActionParams.SelectedAttribute, matchController.DamageLimitPerLevel, out var log);
+                SoloBattleLogic.ModifyAttribute(playerCard, playerController.PlayerActionParams.SelectedAttribute, matchController.UseCost);
+                log.DisplayConsoleMessages();
+
+                cpuController.RefreshCommands(playerCard, opponentCard);
+            }
+
+            if (playerController.PlayerActionParams.ChangeCard)
+            {
+                ChangeCard(Deck, playerCard);
+            }
+        }
+
+        private void SelectAction(DataCard playerCard, DataCard opponentCard, MatchController matchController, PlayerController playerController)
+        {
+            Console.WriteLine("------------------------------- List of Attributes: -----------------------------------------------------------");
+            Console.WriteLine();
+
+            DisplayCardDetails(playerCard, playerController.PreviousAttribute, false, matchController.Inspect ? opponentCard : null);
+
+            if (playerController.PreviousAttribute >= 0)
+            {
+                Console.WriteLine($"Previous used: {playerCard.CurrentAttributes[playerController.PreviousAttribute].AttributeName}");
+            }
+
+            Console.WriteLine();
+
+            var hasSelected = false;
+            while (!hasSelected)
+            {
+                Console.WriteLine("Enter a valid value - cannot use prev:");
+                var input = Console.ReadLine();
+
+                if (input.ToLower() == "c")
+                {
+                    playerController.PlayerActionParams.ChangeCard = true;
+                    playerController.PlayerActionParams.ConductBattle = false;
+                    hasSelected = true;
+                }
+                else if (input.ToLower() == "i")
+                {
+                    matchController.Inspect = true;
+                    playerController.PlayerActionParams.ConductBattle = false;
+                    hasSelected = true;
+                }
+                else if (input.ToLower() == "r")
+                {
+                    if (UsingHero)
+                        playerController.PlayerActionParams.Retreat = true;
+                }
+                else if (int.TryParse(input, out var res))
+                {
+                    res--;
+
+                    if (playerController.PreviousAttribute == res)
+                        continue;
+
+
+                    if (res < playerCard.CurrentAttributes.Count)
+                    {
+                        hasSelected = true;
+                        playerController.PreviousAttribute = res;
+                    }
+
+                    playerController.PlayerActionParams.SelectedAttribute = res;
+                    playerController.PlayerActionParams.ChangeCard = false;
+                    playerController.PlayerActionParams.ConductBattle = true;
+                }
+
+                if (playerController.PlayerActionParams.Retreat)
+                    break;
             }
         }
 
@@ -673,9 +680,9 @@ namespace ProjectTrumps.Core
 
         public void ChangeCard(List<DataCard> deck, DataCard card, bool displayChangedStats = true)
         {
-            if (!card.MainAttributes.Any())
+            if (!card.StoredAttributes.Any())
             {
-                card.MainAttributes = CardFactory.Instance.CopyAttributes(card.CurrentAttributes);
+                card.StoredAttributes = CardFactory.Instance.CopyAttributes(card.CurrentAttributes);
             }
 
             var newCard = deck[new Random().Next(0, deck.Count)];

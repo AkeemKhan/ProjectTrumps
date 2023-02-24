@@ -15,7 +15,7 @@ namespace ProjectTrumps.Core
 
         public List<int> Commands { get; set; }
         public CPUMoralaController Morale { get; set; }
-        public int DamageThreshold { get; set; }
+        public int MoraleDropDamageThreshold { get; set; }
         public int DamageTakenCounter { get; set; }
         public int ChangeAtNTimesDamageTaken { get; set; }
         public bool ChangeCard { get; set; }        
@@ -138,10 +138,10 @@ namespace ProjectTrumps.Core
             float segment = (1f / 6f) * 100;
             log = new BattleLog();
 
-            if (healthBefore - healthAfter >= _cpuController.DamageThreshold)
+            if (healthBefore - healthAfter >= _cpuController.MoraleDropDamageThreshold)
             {
                 var diff = healthBefore - healthAfter;
-                if (diff * 2 > _cpuController.DamageThreshold)
+                if (diff * 2 > _cpuController.MoraleDropDamageThreshold)
                 {
                     float moraleDamage = 0;
                     // 6 / 2 + 1 = 4

@@ -19,12 +19,11 @@ namespace ProjectTrumps.Core
             var card1AttributeStat = (card1Attribute.AttributeValue * 10) + new Random().Next(-5, 6);
             var card2AttributeStat = (card2Attribute.AttributeValue * 10) + new Random().Next(-5, 6);
 
-            log.AddMessage(true, $"Selected Attribute: {card1Attribute.AttributeName}");
+            log.AddMessage(true, $"{card1.DisplayName} Selected Attribute ----> {card1Attribute.AttributeName}");
 
             log.AddMessage(false, $"{card1.DisplayName} - {card1Attribute.AttributeName} - {card1Attribute.AttributeValue}");
             log.AddMessage(false, $"{card2.DisplayName} - {card2Attribute.AttributeName} - {card2Attribute.AttributeValue}");
 
-            log.AddMessage(false, System.Environment.NewLine);
             log.AddMessage(false, $"Calculated Attribute stats: {card1Attribute.AttributeName}");
 
             log.AddMessage(false, $"{card1.DisplayName} - {card1Attribute.AttributeName} - {card1AttributeStat}");
@@ -37,7 +36,6 @@ namespace ProjectTrumps.Core
 
             if (card1Attribute.AttributeType != card2Attribute.AttributeType)
             {
-                log.AddMessage(false, System.Environment.NewLine);
                 log.AddMessage(false, $"{card1.DisplayName} - type - {card1.Type.ToString()}");
                 log.AddMessage(false, $"{card2.DisplayName} - type - {card2.Type.ToString()}");
 
@@ -99,7 +97,6 @@ namespace ProjectTrumps.Core
             // Comduct battle
             if (!noDamage)
             {
-                log.AddMessage(false, System.Environment.NewLine);
                 if (damageCard1)
                 {
                     ConductBattle(card1, card2, log, damage);
@@ -144,7 +141,7 @@ namespace ProjectTrumps.Core
 
                 var healthBefore = winningCard.Health;
                 losingCard.Health -= additionalDamage;
-                log.AddMessage(true, $"{losingCard.DisplayName} TOOK ADDITIONAL BURN DAMAGE");
+                log.AddMessage(true, $"{losingCard.DisplayName} TOOK ADDITIONAL BURN DAMAGE - {additionalDamage}");
                 log.AddMessage(true, $"{losingCard.DisplayName} Health: {healthBefore} >>>> {losingCard.Health}");
             }
         }
@@ -244,8 +241,6 @@ namespace ProjectTrumps.Core
                 log.AddMessage(true, $"{card.DisplayName} Health: {card.Health}");
                 log.AddMessage(true, $"{finalBar}");            
             }
-
-
         }
 
         public static void ModifyAttribute(DataCard card, int attributeIndex, int modifier)

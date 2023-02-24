@@ -34,9 +34,9 @@ namespace ProjectTrumps.Core
 
         public IList<TrumpsAttribute> CurrentAttributes { get; set; } = new List<TrumpsAttribute>();
         public IList<TrumpsAttribute> OriginalAttributes { get; set; } = new List<TrumpsAttribute>();
-        public IList<TrumpsAttribute> MainAttributes { get; set; } = new List<TrumpsAttribute>();
+        public IList<TrumpsAttribute> StoredAttributes { get; set; } = new List<TrumpsAttribute>();
 
-        public bool HasSwapped => MainAttributes.Any();
+        public bool HasSwapped => StoredAttributes.Any();
 
         public int Health { get; set; } = 100;
         public int MaxHealth { get; set; } = 100;
@@ -66,7 +66,7 @@ namespace ProjectTrumps.Core
             Type = OriginalType;
 
             CurrentAttributes.Clear();
-            foreach (var newAttr in MainAttributes)
+            foreach (var newAttr in StoredAttributes)
             {
                 CurrentAttributes.Add(new TrumpsAttribute
                 {
@@ -75,7 +75,7 @@ namespace ProjectTrumps.Core
                     AttributeValue = newAttr.AttributeValue,
                 });
             }
-            MainAttributes.Clear();
+            StoredAttributes.Clear();
         }
 
         public void RestoreAttributes(bool restoreHealth = true)
