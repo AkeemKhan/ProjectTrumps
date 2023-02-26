@@ -142,7 +142,7 @@ namespace ProjectTrumps.Core
                     blog.DisplayConsoleMessages();
 
                     Console.WriteLine("Press to continue");
-                    playerController.EvaluatePostTurn(playerTurn  playerCard, opponentCard);
+                    playerController.EvaluatePostTurn(playerTurn,  playerCard, opponentCard);
                     Console.ReadLine();
                 }
 
@@ -171,124 +171,129 @@ namespace ProjectTrumps.Core
                     Console.WriteLine();
                     DisplayCardDetails(playerCard, 0, playerController, true);
 
-                    if (UsingHero && playerCard.StoredAttributes.Any())
-                    {                        
-                        Console.WriteLine();
-                        Console.WriteLine("Restore main card?");
-                        Console.WriteLine();
-                        Console.WriteLine("1: Yes");
-                        Console.WriteLine("2: No");
-
-                        Console.WriteLine();
-
-                        var resInput = Console.ReadLine();
-                        if (resInput == "1")
-                        {
-                            playerCard.RestoreStoredAttributes();
-                            Console.WriteLine();
-                            Console.WriteLine("Restored Main card...");
-                            DisplayCardDetails(playerCard, 0, playerController, true);
-                            Console.WriteLine();
-                            Console.ReadLine();
-                        }                        
-                    }
-
-                    if (ArcadeOpponents.Any())
-                    {
-                        Console.WriteLine("Select Reward:");
-                        Console.WriteLine();
-                        Console.WriteLine("1: Enhance Health");
-                        Console.WriteLine("2: Replenish Attributes (Heroes also slighly improve attributes)");
-                        Console.WriteLine("3: Enhance All Attributes");
-                        Console.WriteLine("4: Greatly Enhance Single Random Attributes");
-                        Console.WriteLine("5: Specialise Types - (Restore attributes)");
-                        Console.WriteLine("6: Specialise Types - (Keep attributes and Enhance a random attribute)");
-                        Console.WriteLine("7: All Minor Enhance");
-
-                        Console.WriteLine();
-
-                        var input = Console.ReadLine();
-                        var heroUpgrade = 0;
-                        switch (input)
-                        {
-                            case "1":
-                                Console.WriteLine("Restored and Enhanced Health");
-                                playerCard.FullHeal();
-                                playerCard.EnhanceHealth(100);
-                                break;
-                            case "2":
-                                Console.WriteLine("Restored attributes to original values");
-                                playerCard.Heal(20);
-                                playerCard.RestoreAttributes();
-
-                                if (UsingHero)
-                                {
-                                    heroUpgrade++;
-                                    playerCard.EnhanceAllAttributes(heroUpgrade + 1);
-                                }
-
-                                break;
-                            case "3":
-                                Console.WriteLine("Enhanced current attributes");
-                                // card1.Heal(20);
-                                playerCard.EnhanceAllAttributes(2);
-                                // card1.EnhanceAttribute(new Random().Next(0, card1.CurrentAttributes.Count), 1);
-                                break;
-                            case "4":
-                                Console.WriteLine("Greatly enhanced a single attribute");
-                                var extraModifier = 0;
-
-                                if (UsingHero)
-                                {
-                                    heroUpgrade++;
-                                    extraModifier = 1 + heroUpgrade;
-                                }
-
-                                playerCard.EnhanceAttribute(new Random().Next(0, playerCard.CurrentAttributes.Count), 5 + extraModifier);
-                                break;
-                            case "5":
-                                Console.WriteLine($"Specialised and restored all attributes to type {playerCard.Type.ToString()}");
-                                playerCard.Heal(15);
-                                playerCard.UnifyAttributesToCardType(true);
-                                break;
-                            case "6":
-                                Console.WriteLine($"Specialised all attributes to type {playerCard.Type.ToString()}");
-                                playerCard.Heal(15);
-                                playerCard.UnifyAttributesToCardType();
-                                playerCard.EnhanceAttribute(new Random().Next(0, playerCard.CurrentAttributes.Count), 3);
-                                break;
-                            case "7":
-                                Console.WriteLine("Lighlty enhanced all attributes and health");
-                                playerCard.Heal(15);
-                                playerCard.EnhanceHealth(25);
-                                playerCard.EnhanceAllAttributes(1);
-                                break;
-                            default:
-                                Console.WriteLine("Restored and Enhanced Health");
-                                playerCard.FullHeal();
-                                playerCard.EnhanceHealth(100);
-                                break;
-                        }
-
-                        Console.ReadLine();
-
-                        DisplayCardDetails(playerCard, 0, playerController, true);
-
-                        Console.WriteLine("Continue to next opponent...");
-                        Console.ReadLine();
-                    }
-                    else
-                    {
-                        Console.ReadLine();
-                        Console.WriteLine("VICTORY - Enhancing your card");
-                        playerCard.EnhanceAttribute(new Random().Next(0, playerCard.CurrentAttributes.Count), 7);
-
-                        SaveState.Instance.SaveCard(playerCard);
-                        Console.ReadLine();
-                    }
+                    PostMatchMenu(playerCard, playerController);
 
                     Round++;
                 }
+            }
+        }
+
+        private void PostMatchMenu(DataCard playerCard, PlayerController playerController)
+        {
+            if (UsingHero && playerCard.StoredAttributes.Any())
+            {
+                Console.WriteLine();
+                Console.WriteLine("Restore main card?");
+                Console.WriteLine();
+                Console.WriteLine("1: Yes");
+                Console.WriteLine("2: No");
+
+                Console.WriteLine();
+
+                var resInput = Console.ReadLine();
+                if (resInput == "1")
+                {
+                    playerCard.RestoreStoredAttributes();
+                    Console.WriteLine();
+                    Console.WriteLine("Restored Main card...");
+                    DisplayCardDetails(playerCard, 0, playerController, true);
+                    Console.WriteLine();
+                    Console.ReadLine();
+                }
+            }
+
+            if (ArcadeOpponents.Any())
+            {
+                Console.WriteLine("Select Reward:");
+                Console.WriteLine();
+                Console.WriteLine("1: Enhance Health");
+                Console.WriteLine("2: Replenish Attributes (Heroes also slighly improve attributes)");
+                Console.WriteLine("3: Enhance All Attributes");
+                Console.WriteLine("4: Greatly Enhance Single Random Attributes");
+                Console.WriteLine("5: Specialise Types - (Restore attributes)");
+                Console.WriteLine("6: Specialise Types - (Keep attributes and Enhance a random attribute)");
+                Console.WriteLine("7: All Minor Enhance");
+
+                Console.WriteLine();
+
+                var input = Console.ReadLine();
+                var heroUpgrade = 0;
+                switch (input)
+                {
+                    case "1":
+                        Console.WriteLine("Restored and Enhanced Health");
+                        playerCard.FullHeal();
+                        playerCard.EnhanceHealth(100);
+                        break;
+                    case "2":
+                        Console.WriteLine("Restored attributes to original values");
+                        playerCard.Heal(20);
+                        playerCard.RestoreAttributes();
+
+                        if (UsingHero)
+                        {
+                            heroUpgrade++;
+                            playerCard.EnhanceAllAttributes(heroUpgrade + 1);
+                        }
+
+                        break;
+                    case "3":
+                        Console.WriteLine("Enhanced current attributes");
+                        // card1.Heal(20);
+                        playerCard.EnhanceAllAttributes(2);
+                        // card1.EnhanceAttribute(new Random().Next(0, card1.CurrentAttributes.Count), 1);
+                        break;
+                    case "4":
+                        Console.WriteLine("Greatly enhanced a single attribute");
+                        var extraModifier = 0;
+
+                        if (UsingHero)
+                        {
+                            heroUpgrade++;
+                            extraModifier = 1 + heroUpgrade;
+                        }
+
+                        playerCard.EnhanceAttribute(new Random().Next(0, playerCard.CurrentAttributes.Count), 5 + extraModifier);
+                        break;
+                    case "5":
+                        Console.WriteLine($"Specialised and restored all attributes to type {playerCard.Type.ToString()}");
+                        playerCard.Heal(15);
+                        playerCard.UnifyAttributesToCardType(true);
+                        break;
+                    case "6":
+                        Console.WriteLine($"Specialised all attributes to type {playerCard.Type.ToString()}");
+                        playerCard.Heal(15);
+                        playerCard.UnifyAttributesToCardType();
+                        playerCard.EnhanceAttribute(new Random().Next(0, playerCard.CurrentAttributes.Count), 3);
+                        break;
+                    case "7":
+                        Console.WriteLine("Lighlty enhanced all attributes and health");
+                        playerCard.Heal(15);
+                        playerCard.EnhanceHealth(25);
+                        playerCard.EnhanceAllAttributes(1);
+                        break;
+                    default:
+                        Console.WriteLine("Restored and Enhanced Health");
+                        playerCard.FullHeal();
+                        playerCard.EnhanceHealth(100);
+                        break;
+                }
+
+                Console.ReadLine();
+
+                DisplayCardDetails(playerCard, 0, playerController, true);
+
+                Console.WriteLine("Continue to next opponent...");
+                Console.ReadLine();
+            }
+            else
+            {
+                Console.ReadLine();
+                Console.WriteLine("VICTORY - Enhancing your card");
+                playerCard.EnhanceAttribute(new Random().Next(0, playerCard.CurrentAttributes.Count), 7);
+
+                SaveState.Instance.SaveCard(playerCard);
+                Console.ReadLine();
             }
         }
 
