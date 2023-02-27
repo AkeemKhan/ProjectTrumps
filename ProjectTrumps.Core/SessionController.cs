@@ -66,6 +66,8 @@ namespace ProjectTrumps.Core
                     Inspect = false
                 };
 
+                var log = matchController.BattleLog;
+
                 playerController.PlayerActionParams.InitialiseAtStartOfTurn();
 
                 var playerTurn = true;
@@ -115,7 +117,7 @@ namespace ProjectTrumps.Core
                         {
                             Console.WriteLine("******************************************************************");
                             var randomAttributeSelected = cpuController.ChooseCommand();
-                            SoloBattleLogic.EvaluateBattle(playerCard, opponentCard, randomAttributeSelected, matchController.DamageLimitPerLevel, out var log);
+                            SoloBattleLogic.EvaluateBattle(playerCard, opponentCard, randomAttributeSelected, matchController.DamageLimitPerLevel, log);
                             SoloBattleLogic.ModifyAttribute(opponentCard, randomAttributeSelected, matchController.UseCost);
                             log.DisplayConsoleMessages();
                         }
@@ -302,9 +304,9 @@ namespace ProjectTrumps.Core
             if (playerController.PlayerActionParams.ConductBattle)
             {
                 Console.WriteLine("******************************************************************");
-                SoloBattleLogic.EvaluateBattle(playerCard, opponentCard, playerController.PlayerActionParams.SelectedAttribute, matchController.DamageLimitPerLevel, out var log);
+                SoloBattleLogic.EvaluateBattle(playerCard, opponentCard, playerController.PlayerActionParams.SelectedAttribute, matchController.DamageLimitPerLevel, matchController.BattleLog);
                 SoloBattleLogic.ModifyAttribute(playerCard, playerController.PlayerActionParams.SelectedAttribute, matchController.UseCost);
-                log.DisplayConsoleMessages();
+                matchController.BattleLog.DisplayConsoleMessages();
 
                 cpuController.RefreshCommands(playerCard, opponentCard);
             }

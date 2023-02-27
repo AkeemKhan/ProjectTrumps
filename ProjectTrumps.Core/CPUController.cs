@@ -159,19 +159,19 @@ namespace ProjectTrumps.Core
                     DamageMorale(segment * 4);
 
                     // aiMoraleDamage += ((aiChangeAtMoraleBreak / 2) + 1);
-                    log.AddMessage(true, $"Inflicted SIGNIFICANT damage");
+                    log.AddMessage(true, $"Inflicted SIGNIFICANT damage", LogType.Morale);
                 }
                 else if (!playerTurn)
                 {
                     // aiMoraleDamage++;
                     DamageMorale(segment);
-                    log.AddMessage(true, $"Inflicted considerable damage");
+                    log.AddMessage(true, $"Inflicted considerable damage", LogType.Morale);
                 }
                 else
                 {
                     // aiMoraleDamage = aiMoraleDamage + 2;
                     DamageMorale(segment*2);
-                    log.AddMessage(true, $"Self-Inflicted considerable damage");
+                    log.AddMessage(true, $"Self-Inflicted considerable damage", LogType.Morale);
                 }
             }
             else
@@ -181,11 +181,11 @@ namespace ProjectTrumps.Core
 
             if (Broken)
             {
-                log.AddMessage(true, $"Opponenet has Broken - Morale - 0%");
+                log.AddMessage(true, $"Opponenet has Broken - Morale - 0%", LogType.Morale);
             }
             else
             {
-                log.AddMessage(true, $"Morale - {CurrentMorale.ToString("0")}%");
+                log.AddMessage(true, $"Morale - {CurrentMorale.ToString("0")}%", LogType.Morale);
             }
 
             if (Broken || _cpuController.DamageTakenCounter == _cpuController.ChangeAtNTimesDamageTaken)

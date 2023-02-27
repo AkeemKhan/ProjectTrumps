@@ -8,9 +8,8 @@ namespace ProjectTrumps.Core
 {
     public class SoloBattleLogic : BattleLogic
     {       
-        public static void EvaluateBattle(DataCard card1, DataCard card2, int attributeIndex, int damageLimitPerLevel, out BattleLog log)
-        {
-            log = new BattleLog();
+        public static void EvaluateBattle(DataCard card1, DataCard card2, int attributeIndex, int damageLimitPerLevel, BattleLog log)
+        {            
             log.OnlyLogResult = true;
 
             var card1Attribute = card1.CurrentAttributes[attributeIndex];
@@ -19,15 +18,15 @@ namespace ProjectTrumps.Core
             var card1AttributeStat = (card1Attribute.AttributeValue * 10) + new Random().Next(-5, 6);
             var card2AttributeStat = (card2Attribute.AttributeValue * 10) + new Random().Next(-5, 6);
 
-            log.AddMessage(true, $"{card1.DisplayName} Selected Attribute ----> {card1Attribute.AttributeName}");
+            log.AddMessage(true, $"{card1.DisplayName} Selected Attribute ----> {card1Attribute.AttributeName}", LogType.Attribute);
 
-            log.AddMessage(false, $"{card1.DisplayName} - {card1Attribute.AttributeName} - {card1Attribute.AttributeValue}");
-            log.AddMessage(false, $"{card2.DisplayName} - {card2Attribute.AttributeName} - {card2Attribute.AttributeValue}");
+            log.AddMessage(false, $"{card1.DisplayName} - {card1Attribute.AttributeName} - {card1Attribute.AttributeValue}", LogType.General);
+            log.AddMessage(false, $"{card2.DisplayName} - {card2Attribute.AttributeName} - {card2Attribute.AttributeValue}", LogType.General);
 
-            log.AddMessage(false, $"Calculated Attribute stats: {card1Attribute.AttributeName}");
+            log.AddMessage(false, $"Calculated Attribute stats: {card1Attribute.AttributeName}", LogType.General);
 
-            log.AddMessage(false, $"{card1.DisplayName} - {card1Attribute.AttributeName} - {card1AttributeStat}");
-            log.AddMessage(false, $"{card2.DisplayName} - {card2Attribute.AttributeName} - {card2AttributeStat}");
+            log.AddMessage(false, $"{card1.DisplayName} - {card1Attribute.AttributeName} - {card1AttributeStat}", LogType.General);
+            log.AddMessage(false, $"{card2.DisplayName} - {card2Attribute.AttributeName} - {card2AttributeStat}", LogType.General);
 
             // Set Advantage
             // Red > Blue
@@ -36,8 +35,8 @@ namespace ProjectTrumps.Core
 
             if (card1Attribute.AttributeType != card2Attribute.AttributeType)
             {
-                log.AddMessage(false, $"{card1.DisplayName} - type - {card1.Type.ToString()}");
-                log.AddMessage(false, $"{card2.DisplayName} - type - {card2.Type.ToString()}");
+                log.AddMessage(false, $"{card1.DisplayName} - type - {card1.Type.ToString()}", LogType.General);
+                log.AddMessage(false, $"{card2.DisplayName} - type - {card2.Type.ToString()}", LogType.General);
 
                 bool card1Advantage = (card1Attribute.AttributeType == ColourType.Red && card2Attribute.AttributeType == ColourType.Blue)
                               || (card1Attribute.AttributeType == ColourType.Blue && card2Attribute.AttributeType == ColourType.Green)
@@ -49,13 +48,13 @@ namespace ProjectTrumps.Core
 
                 if (card1Advantage)
                 {
-                    log.AddMessage(false, $"{card1.DisplayName} - Has battle advantage - {card1.Type.ToString()} >>> {card2.Type.ToString()} ");
+                    log.AddMessage(false, $"{card1.DisplayName} - Has battle advantage - {card1.Type.ToString()} >>> {card2.Type.ToString()} ", LogType.General);
                     card1AttributeStat += 10;
                     card2AttributeStat -= 10;
                 }
                 else if (card2Advantage)
                 {
-                    log.AddMessage(false, $"{card2.DisplayName} - Has battle advantage - {card2.Type.ToString()} >>> {card1.Type.ToString()}");
+                    log.AddMessage(false, $"{card2.DisplayName} - Has battle advantage - {card2.Type.ToString()} >>> {card1.Type.ToString()}", LogType.General);
                     card2AttributeStat += 10;
                     card1AttributeStat -= 10;
                 }
@@ -74,7 +73,7 @@ namespace ProjectTrumps.Core
                 if (damage > card1.Level * damageLimitPerLevel)
                     damage = card1.Level * damageLimitPerLevel;
 
-                log.AddMessage(true, $"Damage to deal - {damage}");
+                log.AddMessage(true, $"Damage to deal - {damage}", LogType.StandardDamage);
             }
             // Card 2 Wins
             else if (card1AttributeStat < card2AttributeStat)
@@ -85,13 +84,13 @@ namespace ProjectTrumps.Core
                 if (damage > card2.Level * damageLimitPerLevel)
                     damage = card2.Level * damageLimitPerLevel;
 
-                log.AddMessage(true, $"Damage to deal - {damage}");
+                log.AddMessage(true, $"Damage to deal - {damage}", LogType.StandardDamage);
             }
             // No win
             else
             {
                 noDamage = true;
-                log.AddMessage(false, $"No damage to deal");
+                log.AddMessage(false, $"No damage to deal", LogType.StandardDamage);
             }
 
             // Comduct battle
@@ -141,8 +140,8 @@ namespace ProjectTrumps.Core
 
                 var healthBefore = winningCard.Health;
                 losingCard.Health -= additionalDamage;
-                log.AddMessage(true, $"{losingCard.DisplayName} TOOK ADDITIONAL BURN DAMAGE - {additionalDamage}");
-                log.AddMessage(true, $"{losingCard.DisplayName} Health: {healthBefore} >>>> {losingCard.Health}");
+                log.AddMessage(true, $"{losingCard.DisplayName} TOOK ADDITIONAL BURN DAMAGE - {additionalDamage}", LogType.Burn);
+                log.AddMessage(true, $"{losingCard.DisplayName} Health: {healthBefore} >>>> {losingCard.Health}", LogType.StandardDamage);
             }
         }
 
@@ -150,7 +149,7 @@ namespace ProjectTrumps.Core
         {
             var healthBefore = losingCard.Health;
             losingCard.Health -= damage;
-            log.AddMessage(true, $"{losingCard.DisplayName} TOOK DAMAGE: {healthBefore} >>>> {losingCard.Health}");
+            log.AddMessage(true, $"{losingCard.DisplayName} TOOK DAMAGE: {healthBefore} >>>> {losingCard.Health}", LogType.StandardDamage);
         }
 
         private static void ConductParry(DataCard losingCard, DataCard winningCard, BattleLog log)
@@ -164,8 +163,8 @@ namespace ProjectTrumps.Core
                 var healthBefore = winningCard.Health;
                 var reverseDamage = 15 + count;
                 winningCard.Health -= reverseDamage;
-                log.AddMessage(true, $"{losingCard.DisplayName} PARRIED for {reverseDamage}!");
-                log.AddMessage(true, $"{winningCard.DisplayName} TOOK DAMAGE: {healthBefore} >>>> {winningCard.Health}");
+                log.AddMessage(true, $"{losingCard.DisplayName} PARRIED for {reverseDamage}!", LogType.Parry);
+                log.AddMessage(true, $"{winningCard.DisplayName} TOOK DAMAGE: {healthBefore} >>>> {winningCard.Health}", LogType.StandardDamage);
             }
         }
 
@@ -179,7 +178,7 @@ namespace ProjectTrumps.Core
                 damage = evade ? 0 : damage;
                 
                 if (evade)
-                    log.AddMessage(true, $"{losingCard.DisplayName} evaded!");
+                    log.AddMessage(true, $"{losingCard.DisplayName} evaded!", LogType.Evade);
             }
             return damage;
         }
@@ -200,13 +199,13 @@ namespace ProjectTrumps.Core
                     card1.Health = card1.Health - count < card1.MaxHealth ? card1.MaxHealth : card1.Health - count;
 
                 card1.EnhanceAttribute(new Random().Next(0, card1.CurrentAttributes.Count), 1);
-                log.AddMessage(true, $"{card1.DisplayName} healed {healthBefore} >>>> {card1.Health}");
+                log.AddMessage(true, $"{card1.DisplayName} healed {healthBefore} >>>> {card1.Health}", LogType.Heal);
             }
         }
 
         public static void ReportHP(List<DataCard> cards, BattleLog log)
         {
-            log.AddMessage(true, System.Environment.NewLine);
+            log.AddMessage(true, System.Environment.NewLine, LogType.General);
 
             foreach (var card in cards)
             {
@@ -238,8 +237,8 @@ namespace ProjectTrumps.Core
                 var hpBarEnd= "]";
                 var finalBar = hpBarStart + hpBar + hpBarEnd;
 
-                log.AddMessage(true, $"{card.DisplayName} Health: {card.Health}");
-                log.AddMessage(true, $"{finalBar}");            
+                log.AddMessage(true, $"{card.DisplayName} Health: {card.Health}", LogType.General);
+                log.AddMessage(true, $"{finalBar}", LogType.General);            
             }
         }
 
@@ -251,25 +250,48 @@ namespace ProjectTrumps.Core
 
     public class BattleLog
     {
-        public IList<string> Messages { get; set; } = new List<string>();
+        public IList<BattleLogMessage> Messages { get; set; } = new List<BattleLogMessage>();
         public bool OnlyLogResult { get; set; }
 
-        public void AddMessage(bool isResult, string message)
+        public void AddMessage(bool isResult, string message, LogType logType)
         {
             if (OnlyLogResult && !isResult)
                 return;
 
-            Messages.Add(message); 
-        }        
+            Messages.Add(new BattleLogMessage() { LogType= logType, Message = message}); 
+        }
 
         public void DisplayConsoleMessages()
         {
-            foreach (var msg in Messages)
+            foreach (var msg in Messages.Where(p => !p.Reported))
             {
+                msg.Reported = true;
                 Console.WriteLine(msg);
             }
-
         }
+    }
+
+    public class BattleLogMessage
+    {
+        public LogType LogType { get; set; }
+        public string Message { get; set; }
+        public bool Reported { get; set; } = false;
+    }
+
+    public enum LogType
+    {
+        General = 0,
+        Attribute = 1,
+        StandardDamage = 2,
+        Burn = 3,
+        Evade = 4,
+        Parry = 5,
+        Heal = 6,
+        Morale = 7,
+        ChangeCard = 8,
+        Fuse = 9,
+        Enhance = 10,
+        Retreat = 11,
     }
 
     internal interface BattleLogic
@@ -282,5 +304,5 @@ namespace ProjectTrumps.Core
         Normal = 2,
         Hard = 3,
         VertHard = 4,
-    }
+    }  
 }
